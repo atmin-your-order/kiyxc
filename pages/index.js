@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 
 const users = [
-  ['iky123', 'iky'],
-  ['amane01', 'amane']
+  ['admin123', 'kiyy'],
+  ['testpass', 'tester']
 ]
 
 const plans = {
@@ -28,12 +28,15 @@ export default function Home() {
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [typed, setTyped] = useState('')
+  const [showForm, setShowForm] = useState(false)
 
   useEffect(() => {
     const audio = new Audio(musicURL)
     audio.loop = true
     audio.volume = 0.3
     audio.play().catch(() => {})
+    setTimeout(() => setShowForm(true), 200)
   }, [])
 
   const handleLogin = (e) => {
@@ -51,6 +54,7 @@ export default function Home() {
     e.preventDefault()
     setLoading(true)
     setResult(null)
+    setTyped('')
 
     const res = await fetch('/api/deploy', {
       method: 'POST',
@@ -61,12 +65,22 @@ export default function Home() {
     const data = await res.json()
     setLoading(false)
     setResult(data)
+
+    if (data.success) {
+      const fullText = `📌 Server ID: ${data.serverId || '-'}\n👤 Username : ${data.username}\n🔐 Password : ${data.password}\n\n💾 RAM     : ${data.ram}\n⚙️ CPU     : ${data.cpu}\n🗃 Disk    : ${data.disk}\n🌐 Panel   : ${data.panel}`
+      let index = 0
+      const interval = setInterval(() => {
+        setTyped(t => t + fullText[index])
+        index++
+        if (index >= fullText.length) clearInterval(interval)
+      }, 15)
+    }
   }
 
   const handlePlanChange = (e) => {
     const selected = plans[e.target.value]
     if (selected) {
-      setForm({ ...form, ram: selected.ram, disk: selected.disk, cpu: selected.cpu })
+      setForm(prev => ({ ...prev, ram: selected.ram, disk: selected.disk, cpu: selected.cpu }))
     }
   }
 
@@ -79,11 +93,12 @@ export default function Home() {
       alignItems: 'center',
       justifyContent: 'center',
       padding: '2rem',
-      fontFamily: 'sans-serif'
+      fontFamily: 'sans-serif',
+      transition: 'opacity 1s ease'
     }}>
       <h1 style={{ marginBottom: '2rem', color: '#333' }}>Deploy Bot WhatsApp</h1>
 
-      {!login ? (
+      {showForm && !login && (
         <form onSubmit={handleLogin} style={{
           backgroundColor: '#ffffff',
           padding: '1.5rem',
@@ -93,14 +108,18 @@ export default function Home() {
           flexDirection: 'column',
           gap: '1rem',
           width: '100%',
-          maxWidth: '400px'
+          maxWidth: '400px',
+          transform: 'translateX(0)',
+          animation: 'slideIn 0.5s ease forwards'
         }}>
-          <input placeholder="Username" required onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })} />
-          <input placeholder="Password" type="password" required onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })} />
-          <button style={{ padding: '0.8rem', backgroundColor: '#6200ea', color: '#fff', border: 'none', borderRadius: '8px' }}>Login</button>
+          <input placeholder="Username" required onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })} style={{ fontSize: '1rem', padding: '0.8rem' }} />
+          <input placeholder="Password" type="password" required onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })} style={{ fontSize: '1rem', padding: '0.8rem' }} />
+          <button style={{ padding: '1rem', backgroundColor: '#6200ea', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>Login</button>
           {error && <p style={{ color: 'red' }}>{error}</p>}
         </form>
-      ) : (
+      )}
+
+      {login && (
         <form onSubmit={handleDeploy} style={{
           backgroundColor: '#ffffff',
           padding: '1.5rem',
@@ -110,16 +129,18 @@ export default function Home() {
           flexDirection: 'column',
           gap: '1rem',
           width: '100%',
-          maxWidth: '400px'
+          maxWidth: '400px',
+          transform: 'translateX(0)',
+          animation: 'slideIn 0.5s ease forwards'
         }}>
-          <input placeholder="Username Bot" required onChange={e => setForm({ ...form, username: e.target.value })} />
-          <select onChange={handlePlanChange}>
+          <input placeholder="Username Bot" required onChange={e => setForm({ ...form, username: e.target.value })} style={{ fontSize: '1rem', padding: '0.8rem' }} />
+          <select onChange={handlePlanChange} style={{ fontSize: '1rem', padding: '0.8rem' }}>
             <option>Pilih Plan</option>
             {Object.keys(plans).map(plan => (
               <option key={plan} value={plan}>{plan}</option>
             ))}
           </select>
-          <button style={{ padding: '0.8rem', backgroundColor: '#6200ea', color: '#fff', border: 'none', borderRadius: '8px' }}>
+          <button style={{ padding: '1rem', backgroundColor: '#6200ea', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>
             {loading ? 'Mendeploy...' : 'Deploy Sekarang'}
           </button>
         </form>
@@ -134,32 +155,18 @@ export default function Home() {
           boxShadow: '0 0 15px rgba(0,0,0,0.1)',
           width: '100%',
           maxWidth: '600px',
-          position: 'relative'
+          position: 'relative',
+          fontFamily: 'monospace',
+          fontSize: '14px',
+          whiteSpace: 'pre-wrap',
+          lineHeight: '1.6'
         }}>
           {result.success ? (
             <>
               <h2 style={{ color: '#4CAF50', marginBottom: '1rem' }}>🎉 AKUN BERHASIL DIBUAT!</h2>
-              <pre id="resultText" style={{
-                whiteSpace: 'pre-wrap',
-                wordWrap: 'break-word',
-                fontSize: '14px',
-                lineHeight: '1.6',
-                background: '#f9f9f9',
-                padding: '1rem',
-                borderRadius: '8px',
-                border: '1px solid #eee'
-              }}>{`📌 Server ID: ${result.serverId || '-'}
-👤 Username : ${result.username}
-🔐 Password : ${result.password}
-
-💾 RAM     : ${result.ram}
-⚙️ CPU     : ${result.cpu}
-🗃 Disk    : ${result.disk}
-🌐 Panel   : ${result.panel}`}</pre>
-
+              <div id="resultText">{typed}</div>
               <button onClick={() => {
-                const text = document.getElementById('resultText').innerText
-                navigator.clipboard.writeText(text)
+                navigator.clipboard.writeText(typed)
                 const notif = document.getElementById('copyNotif')
                 notif.style.display = 'block'
                 setTimeout(() => notif.style.display = 'none', 2000)
@@ -173,7 +180,6 @@ export default function Home() {
                 cursor: 'pointer',
                 fontWeight: 'bold'
               }}>📋 Salin Detail</button>
-
               <p id="copyNotif" style={{
                 marginTop: '0.5rem',
                 color: 'green',
@@ -188,4 +194,4 @@ export default function Home() {
       )}
     </div>
   )
-        }
+                                                                                                                                                   }
