@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react'
 
 const users = [
-  ['iky123', 'iky'],
-  ['amane01', 'amane']
+  ['admin123', 'kiyy'],
+  ['testpass', 'tester']
 ]
 
 export default function Home() {
@@ -14,6 +14,7 @@ export default function Home() {
   const [error, setError] = useState('')
   const [typedResult, setTypedResult] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleLogin = (e) => {
     e.preventDefault()
@@ -28,6 +29,11 @@ export default function Home() {
 
   const handleDeploy = async (e) => {
     e.preventDefault()
+    setIsLoading(true)
+    setResult(null)
+    setTypedResult('')
+    setIsTyping(false)
+
     const res = await fetch('/api/deploy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -77,6 +83,7 @@ export default function Home() {
         if (i > output.length) {
           clearInterval(typing)
           setIsTyping(false)
+          setIsLoading(false)
         }
       }, 10)
     }
@@ -123,6 +130,10 @@ export default function Home() {
         button:hover {
           background-color: #370061;
         }
+        button:disabled {
+          background-color: #999;
+          cursor: not-allowed;
+        }
       `}</style>
 
       <h1 style={{ color: '#4b0082', marginBottom: '2rem', fontSize: '2rem' }}>🚀 Deploy Panel Bot</h1>
@@ -139,7 +150,9 @@ export default function Home() {
           <input placeholder="Username" required onChange={e => setForm({ ...form, username: e.target.value })} />
           <input placeholder="RAM (0 = Unlimited)" type="number" required onChange={e => setForm({ ...form, ram: e.target.value })} />
           <input placeholder="CPU (0 = Unlimited)" type="number" required onChange={e => setForm({ ...form, cpu: e.target.value })} />
-          <button>Deploy</button>
+          <button disabled={isLoading}>
+            {isLoading ? 'Akun Anda sedang dibuat...' : 'Deploy'}
+          </button>
         </form>
       )}
 
