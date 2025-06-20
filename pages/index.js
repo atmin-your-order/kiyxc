@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react'
-import crypto from 'crypto'
+import { useState } from 'react'
 
 const users = [
-  ['admin123', 'kiyy'],
-  ['testpass', 'tester']
+  ['kiy123', 'kiyy'],
+  ['amane01', 'amane']
 ]
 
 export default function Home() {
@@ -12,8 +11,7 @@ export default function Home() {
   const [form, setForm] = useState({ username: '', ram: '', cpu: '' })
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
-  const [copyText, setCopyText] = useState('Salin Detail 📋')
-  const [typedResult, setTypedResult] = useState('')
+  const [copied, setCopied] = useState(false)
 
   const handleLogin = (e) => {
     e.preventDefault()
@@ -22,41 +20,60 @@ export default function Home() {
       setLogin(true)
       setError('')
     } else {
-      setError('❌ Username atau password salah!')
+      setError('Username atau password salah!')
     }
   }
 
   const handleDeploy = async (e) => {
     e.preventDefault()
 
+    const createdAt = new Date()
+    const expiredAt = new Date()
+    expiredAt.setDate(createdAt.getDate() + 30)
+
+    const finalData = {
+      ...form,
+      createdAt: createdAt.toLocaleDateString(),
+      expiredAt: expiredAt.toLocaleDateString(),
+      status: 'Aktif ✅'
+    }
+
     const res = await fetch('/api/deploy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form)
+      body: JSON.stringify(finalData)
     })
 
     const data = await res.json()
-    setResult(data)
-    setTypedResult('')
+    setResult({ ...data, ...finalData })
   }
 
-  useEffect(() => {
-    if (result) {
-      let i = 0
-      const text = `🎉 AKUN BERHASIL DIBUAT! 🎉\n\n${JSON.stringify(result, null, 2)}`
-      const interval = setInterval(() => {
-        setTypedResult(text.slice(0, i))
-        i++
-        if (i > text.length) clearInterval(interval)
-      }, 15)
-      return () => clearInterval(interval)
-    }
-  }, [result])
-
   const handleCopy = () => {
-    navigator.clipboard.writeText(typedResult)
-    setCopyText('✅ Berhasil Disalin!')
-    setTimeout(() => setCopyText('Salin Detail 📋'), 2000)
+    const text = `
+🔥 AKUN BERHASIL DIBUAT 🔥
+
+👤 Username: ${result.username}
+🔐 Password: ${result.password}
+🖥️ Server ID: ${result.serverId}
+🌐 Host: ${result.host}
+
+💾 RAM: ${result.ram === '0' ? 'Unlimited' : result.ram + ' MB'}
+⚙️ CPU: ${result.cpu === '0' ? 'Unlimited' : result.cpu + '%'}
+📊 Status: ${result.status}
+📅 Dibuat: ${result.createdAt}
+⏳ Aktif 30 Hari
+📆 Expired: ${result.expiredAt}
+
+🚫 Jangan gunakan untuk aktivitas ilegal:
+• DDoS / Flood / Serangan ke Server
+• Penipuan, Carding, atau Abuse Layanan
+• Phishing / Malware
+
+📌 Jika melanggar, server akan otomatis dihapus tanpa pemberitahuan!
+    `
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 3000)
   }
 
   return (
@@ -68,92 +85,69 @@ export default function Home() {
       alignItems: 'center',
       justifyContent: 'center',
       fontFamily: 'Segoe UI, sans-serif',
-      padding: '2rem',
-      transition: 'all 0.4s ease-in-out'
+      padding: '2rem'
     }}>
-      <h1 style={{ color: '#4b0082', fontSize: '2.5rem', marginBottom: '2rem' }}>🚀 Deploy Panel Bot WhatsApp</h1>
+      <h1 style={{ color: '#4b0082', marginBottom: '2rem' }}>Deploy Panel Bot</h1>
 
       {!login ? (
-        <form onSubmit={handleLogin} style={styles.card}>
-          <input placeholder="Username" required onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })} style={styles.input} />
-          <input placeholder="Password" type="password" required onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })} style={styles.input} />
-          <button style={styles.button}>🔐 Login</button>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '400px' }}>
+          <input placeholder="Username" required onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })} />
+          <input placeholder="Password" type="password" required onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })} />
+          <button style={{ padding: '0.8rem', backgroundColor: '#4b0082', color: 'white', borderRadius: '8px' }}>Login</button>
           {error && <p style={{ color: 'red' }}>{error}</p>}
         </form>
       ) : (
-        <form onSubmit={handleDeploy} style={styles.card}>
-          <input placeholder="Username" required onChange={e => setForm({ ...form, username: e.target.value })} style={styles.input} />
-          <input placeholder="RAM (MB)" type="number" required onChange={e => setForm({ ...form, ram: e.target.value })} style={styles.input} />
-          <input placeholder="CPU (%)" type="number" required onChange={e => setForm({ ...form, cpu: e.target.value })} style={styles.input} />
-          <button style={styles.button}>⚙️ Deploy</button>
+        <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '400px' }}>
+          <input placeholder="Username" required onChange={e => setForm({ ...form, username: e.target.value })} />
+          <input placeholder="RAM (MB)" type="number" required onChange={e => setForm({ ...form, ram: e.target.value })} />
+          <input placeholder="CPU (%)" type="number" required onChange={e => setForm({ ...form, cpu: e.target.value })} />
+          <button style={{ padding: '0.8rem', backgroundColor: '#4b0082', color: 'white', borderRadius: '8px' }}>Deploy</button>
         </form>
       )}
 
-      {typedResult && (
-        <div style={styles.resultCard}>
-          <pre style={styles.resultText}>{typedResult}</pre>
-          <button onClick={handleCopy} style={styles.copyBtn}>{copyText}</button>
+      {result && (
+        <div style={{
+          marginTop: '2rem',
+          background: 'white',
+          borderRadius: '12px',
+          padding: '1.5rem',
+          boxShadow: '0 0 15px rgba(0,0,0,0.1)',
+          maxWidth: '600px',
+          width: '100%',
+          position: 'relative'
+        }}>
+          <h2 style={{ marginBottom: '1rem', color: '#4b0082' }}>🎉 AKUN BERHASIL DIBUAT 🎉</h2>
+          <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+{`👤 Username: ${result.username}
+🔐 Password: ${result.password}
+🖥️ Server ID: ${result.serverId}
+🌐 Host: ${result.host}
+
+💾 RAM: ${result.ram === '0' ? 'Unlimited' : result.ram + ' MB'}
+⚙️ CPU: ${result.cpu === '0' ? 'Unlimited' : result.cpu + '%'}
+📊 Status: ${result.status}
+📅 Dibuat: ${result.createdAt}
+⏳ Aktif 30 Hari
+📆 Expired: ${result.expiredAt}
+
+🚫 Jangan gunakan untuk aktivitas ilegal:
+• DDoS / Flood / Serangan ke Server
+• Penipuan, Carding, atau Abuse Layanan
+• Phishing / Malware
+
+📌 Jika melanggar, server akan otomatis dihapus tanpa pemberitahuan!`}
+          </pre>
+          <button onClick={handleCopy} style={{
+            marginTop: '1rem',
+            padding: '0.6rem 1rem',
+            backgroundColor: '#4b0082',
+            color: 'white',
+            borderRadius: '8px',
+            border: 'none'
+          }}>📋 Salin Detail</button>
+          {copied && <p style={{ color: 'green', marginTop: '0.5rem' }}>✅ Berhasil Disalin</p>}
         </div>
       )}
     </div>
   )
-}
-
-const styles = {
-  card: {
-    backdropFilter: 'blur(10px)',
-    background: 'rgba(255, 255, 255, 0.6)',
-    borderRadius: '20px',
-    padding: '2rem',
-    width: '100%',
-    maxWidth: '400px',
-    boxShadow: '0 8px 30px rgba(0,0,0,0.1)',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
-    animation: 'slideIn 0.5s ease'
-  },
-  input: {
-    padding: '1rem',
-    borderRadius: '12px',
-    border: '1px solid #ccc',
-    fontSize: '1rem',
-    outline: 'none'
-  },
-  button: {
-    padding: '1rem',
-    backgroundColor: '#4b0082',
-    color: 'white',
-    fontWeight: 'bold',
-    borderRadius: '12px',
-    cursor: 'pointer',
-    fontSize: '1rem',
-    transition: 'background 0.3s'
-  },
-  resultCard: {
-    marginTop: '2rem',
-    background: '#fff',
-    borderRadius: '15px',
-    padding: '1.5rem',
-    maxWidth: '600px',
-    width: '100%',
-    boxShadow: '0 6px 20px rgba(0,0,0,0.1)',
-    position: 'relative',
-    animation: 'fadeIn 1s ease-in-out'
-  },
-  resultText: {
-    whiteSpace: 'pre-wrap',
-    fontSize: '1rem',
-    marginBottom: '1rem',
-    fontFamily: 'Courier New, monospace'
-  },
-  copyBtn: {
-    padding: '0.8rem 1rem',
-    backgroundColor: '#4b0082',
-    color: 'white',
-    border: 'none',
-    borderRadius: '10px',
-    cursor: 'pointer',
-    fontSize: '0.95rem'
-  }
         }
