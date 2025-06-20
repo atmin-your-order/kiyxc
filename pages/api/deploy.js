@@ -35,7 +35,7 @@ export default async function handler(req, res) {
 
     const nestRes = await fetch(`${panel}/api/application/nests`, { headers })
     const nestJson = await nestRes.json()
-    const nest = nestJson.data.find(n => n.attributes.name.toLowerCase() === 'node by atraxz')
+    const nest = nestJson.data.find(n => n.attributes.name.toLowerCase() === 'bot whatsapp')
     if (!nest) return res.status(404).json({ error: 'Nest tidak ditemukan' })
     const nestId = nest.attributes.id
 
