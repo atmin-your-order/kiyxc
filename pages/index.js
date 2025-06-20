@@ -19,7 +19,7 @@ const plans = {
   'TAK TERBATAS': { ram: 0, disk: 0, cpu: 0 }
 }
 
-const musicURL = 'https://files.catbox.moe/a5hmbt.mp3' // ganti ke link kamu
+const musicURL = 'https://files.catbox.moe/a5hmbt.mp3'
 
 export default function Home() {
   const [login, setLogin] = useState(false)
@@ -72,75 +72,120 @@ export default function Home() {
 
   return (
     <div style={{
-      background: 'url("https://wallpapercave.com/wp/wp6351891.jpg") center/cover no-repeat fixed',
-      minHeight: '100vh', display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center', fontFamily: 'Segoe UI, sans-serif', padding: '2rem', color: 'white'
+      backgroundColor: '#f9f9f9',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '2rem',
+      fontFamily: 'sans-serif'
     }}>
-      <h1 style={{ color: '#ffffff', marginBottom: '2rem', textShadow: '0 0 10px black' }}>
-        🌌 Deploy Bot WhatsApp - Panel Gachor
-      </h1>
+      <h1 style={{ marginBottom: '2rem', color: '#333' }}>Deploy Bot WhatsApp</h1>
 
       {!login ? (
         <form onSubmit={handleLogin} style={{
-          display: 'flex', flexDirection: 'column', gap: '1rem',
-          width: '100%', maxWidth: '400px', background: 'rgba(0,0,0,0.5)',
-          padding: '1.5rem', borderRadius: '12px'
+          backgroundColor: '#ffffff',
+          padding: '1.5rem',
+          borderRadius: '12px',
+          boxShadow: '0 0 15px rgba(0,0,0,0.1)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem',
+          width: '100%',
+          maxWidth: '400px'
         }}>
-          <input placeholder="Username" required onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })}
-            style={{ padding: '0.8rem', borderRadius: '8px', border: 'none' }} />
-          <input placeholder="Password" type="password" required onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })}
-            style={{ padding: '0.8rem', borderRadius: '8px', border: 'none' }} />
-          <button style={{ padding: '0.8rem', backgroundColor: '#9c27b0', color: 'white', borderRadius: '8px', fontWeight: 'bold' }}>
-            Login
-          </button>
-          {error && <p style={{ color: 'salmon' }}>{error}</p>}
+          <input placeholder="Username" required onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })} />
+          <input placeholder="Password" type="password" required onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })} />
+          <button style={{ padding: '0.8rem', backgroundColor: '#6200ea', color: '#fff', border: 'none', borderRadius: '8px' }}>Login</button>
+          {error && <p style={{ color: 'red' }}>{error}</p>}
         </form>
       ) : (
         <form onSubmit={handleDeploy} style={{
-          display: 'flex', flexDirection: 'column', gap: '1rem',
-          width: '100%', maxWidth: '400px', background: 'rgba(0,0,0,0.5)',
-          padding: '1.5rem', borderRadius: '12px'
+          backgroundColor: '#ffffff',
+          padding: '1.5rem',
+          borderRadius: '12px',
+          boxShadow: '0 0 15px rgba(0,0,0,0.1)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem',
+          width: '100%',
+          maxWidth: '400px'
         }}>
-          <input placeholder="Username Bot" required onChange={e => setForm({ ...form, username: e.target.value })}
-            style={{ padding: '0.8rem', borderRadius: '8px', border: 'none' }} />
-          <select onChange={handlePlanChange} style={{ padding: '0.8rem', borderRadius: '8px' }}>
+          <input placeholder="Username Bot" required onChange={e => setForm({ ...form, username: e.target.value })} />
+          <select onChange={handlePlanChange}>
             <option>Pilih Plan</option>
             {Object.keys(plans).map(plan => (
               <option key={plan} value={plan}>{plan}</option>
             ))}
           </select>
-          <button style={{ padding: '0.8rem', backgroundColor: '#9c27b0', color: 'white', borderRadius: '8px', fontWeight: 'bold' }}>
-            {loading ? '⏳ Mendeploy...' : '🚀 Deploy Sekarang'}
+          <button style={{ padding: '0.8rem', backgroundColor: '#6200ea', color: '#fff', border: 'none', borderRadius: '8px' }}>
+            {loading ? 'Mendeploy...' : 'Deploy Sekarang'}
           </button>
         </form>
       )}
 
       {result && (
         <div style={{
-          marginTop: '2rem', padding: '1rem', background: 'rgba(255,255,255,0.95)',
-          borderRadius: '8px', maxWidth: '600px', width: '100%',
-          boxShadow: '0 0 10px black', color: '#000'
+          marginTop: '2rem',
+          padding: '1.5rem',
+          backgroundColor: '#ffffff',
+          borderRadius: '12px',
+          boxShadow: '0 0 15px rgba(0,0,0,0.1)',
+          width: '100%',
+          maxWidth: '600px',
+          position: 'relative'
         }}>
           {result.success ? (
             <>
-              <h3 style={{ color: 'green' }}>✅ Berhasil Dideploy!</h3>
-              <p>📌 Server ID: {result.serverId || '-'}</p>
-              <p>👤 Username: {result.username}</p>
-              <p>🔐 Password: {result.password}</p>
-              <p>💾 RAM: {result.ram}</p>
-              <p>⚙️ CPU: {result.cpu}</p>
-              <p>🗃 Disk: {result.disk}</p>
-              <p>🌐 Host: {result.panel}</p>
+              <h2 style={{ color: '#4CAF50', marginBottom: '1rem' }}>🎉 AKUN BERHASIL DIBUAT!</h2>
+              <pre id="resultText" style={{
+                whiteSpace: 'pre-wrap',
+                wordWrap: 'break-word',
+                fontSize: '14px',
+                lineHeight: '1.6',
+                background: '#f9f9f9',
+                padding: '1rem',
+                borderRadius: '8px',
+                border: '1px solid #eee'
+              }}>{`📌 Server ID: ${result.serverId || '-'}
+👤 Username : ${result.username}
+🔐 Password : ${result.password}
+
+💾 RAM     : ${result.ram}
+⚙️ CPU     : ${result.cpu}
+🗃 Disk    : ${result.disk}
+🌐 Panel   : ${result.panel}`}</pre>
+
+              <button onClick={() => {
+                const text = document.getElementById('resultText').innerText
+                navigator.clipboard.writeText(text)
+                const notif = document.getElementById('copyNotif')
+                notif.style.display = 'block'
+                setTimeout(() => notif.style.display = 'none', 2000)
+              }} style={{
+                marginTop: '1rem',
+                backgroundColor: '#6200ea',
+                color: 'white',
+                padding: '0.6rem 1rem',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}>📋 Salin Detail</button>
+
+              <p id="copyNotif" style={{
+                marginTop: '0.5rem',
+                color: 'green',
+                fontSize: '0.9rem',
+                display: 'none'
+              }}>✅ Berhasil disalin!</p>
             </>
           ) : (
-            <p style={{ color: 'red' }}>❌ {result.error || 'Terjadi error.'}</p>
+            <p style={{ color: 'red' }}>{result.error || 'Terjadi error.'}</p>
           )}
         </div>
       )}
-
-      <footer style={{ marginTop: '3rem', fontSize: '0.9rem', opacity: 0.8 }}>
-        Made with 💜 by IKYY
-      </footer>
     </div>
   )
-}
+        }
