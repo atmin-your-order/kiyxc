@@ -3,8 +3,9 @@ import { useState } from 'react'
 import crypto from 'crypto'
 
 const users = [
-  ['admin123', 'kiyy'],
-  ['testpass', 'tester']
+  ['sanjaya01', 'ikyy'],
+  ['xemzgg', 'xemz'],
+  ['kenjaa01', 'kenja']
 ]
 
 export default function Home() {
