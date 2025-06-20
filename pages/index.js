@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const users = [
-  ['kiy123', 'kiyy'],
-  ['amane01', 'amane']
+  ['admin123', 'kiyy'],
+  ['testpass', 'tester']
 ]
 
 export default function Home() {
@@ -10,8 +10,27 @@ export default function Home() {
   const [inputLogin, setInputLogin] = useState({ username: '', password: '' })
   const [form, setForm] = useState({ username: '', ram: '', cpu: '' })
   const [result, setResult] = useState(null)
-  const [error, setError] = useState('')
+  const [displayedText, setDisplayedText] = useState('')
   const [copied, setCopied] = useState(false)
+  const [error, setError] = useState('')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (result) {
+      const text = getDeployText(result)
+      let index = 0
+      const typing = setInterval(() => {
+        setDisplayedText((prev) => prev + text[index])
+        index++
+        if (index >= text.length) clearInterval(typing)
+      }, 10)
+      return () => clearInterval(typing)
+    }
+  }, [result])
 
   const handleLogin = (e) => {
     e.preventDefault()
@@ -20,13 +39,12 @@ export default function Home() {
       setLogin(true)
       setError('')
     } else {
-      setError('Username atau password salah!')
+      setError('❌ Username atau password salah!')
     }
   }
 
   const handleDeploy = async (e) => {
     e.preventDefault()
-
     const createdAt = new Date()
     const expiredAt = new Date()
     expiredAt.setDate(createdAt.getDate() + 30)
@@ -46,32 +64,34 @@ export default function Home() {
 
     const data = await res.json()
     setResult({ ...data, ...finalData })
+    setDisplayedText('')
   }
 
-  const handleCopy = () => {
-    const text = `
+  const getDeployText = (data) => `
 🔥 AKUN BERHASIL DIBUAT 🔥
 
-👤 Username: ${result.username}
-🔐 Password: ${result.password}
-🖥️ Server ID: ${result.serverId}
-🌐 Host: ${result.host}
+👤 Username: ${data.username}
+🔐 Password: ${data.password}
+🖥️ Server ID: ${data.serverId}
+🌐 Host: ${data.host}
 
-💾 RAM: ${result.ram === '0' ? 'Unlimited' : result.ram + ' MB'}
-⚙️ CPU: ${result.cpu === '0' ? 'Unlimited' : result.cpu + '%'}
-📊 Status: ${result.status}
-📅 Dibuat: ${result.createdAt}
+💾 RAM: ${data.ram === '0' ? 'Unlimited' : data.ram + ' MB'}
+⚙️ CPU: ${data.cpu === '0' ? 'Unlimited' : data.cpu + '%'}
+📊 Status: ${data.status}
+📅 Dibuat: ${data.createdAt}
 ⏳ Aktif 30 Hari
-📆 Expired: ${result.expiredAt}
+📆 Expired: ${data.expiredAt}
 
 🚫 Jangan gunakan untuk aktivitas ilegal:
 • DDoS / Flood / Serangan ke Server
-• Penipuan, Carding, atau Abuse Layanan
+• Penipuan, Carding, atau Abuse
 • Phishing / Malware
 
-📌 Jika melanggar, server akan otomatis dihapus tanpa pemberitahuan!
-    `
-    navigator.clipboard.writeText(text)
+📌 Jika melanggar, server akan dihapus tanpa pemberitahuan!
+`
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(getDeployText(result))
     setCopied(true)
     setTimeout(() => setCopied(false), 3000)
   }
@@ -80,74 +100,95 @@ export default function Home() {
     <div style={{
       background: 'linear-gradient(135deg, #e0c3fc, #8ec5fc)',
       minHeight: '100vh',
+      padding: '2rem',
       display: 'flex',
-      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       fontFamily: 'Segoe UI, sans-serif',
-      padding: '2rem'
+      opacity: mounted ? 1 : 0,
+      transform: mounted ? 'translateX(0)' : 'translateX(-30px)',
+      transition: 'all 0.6s ease'
     }}>
-      <h1 style={{ color: '#4b0082', marginBottom: '2rem' }}>Deploy Panel Bot</h1>
+      <div style={{
+        background: 'white',
+        padding: '2rem',
+        borderRadius: '20px',
+        boxShadow: '0 5px 20px rgba(0,0,0,0.1)',
+        width: '100%',
+        maxWidth: '500px'
+      }}>
+        <h2 style={{ textAlign: 'center', color: '#4b0082', marginBottom: '1.5rem' }}>🚀 Deploy Bot WhatsApp</h2>
 
-      {!login ? (
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '400px' }}>
-          <input placeholder="Username" required onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })} />
-          <input placeholder="Password" type="password" required onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })} />
-          <button style={{ padding: '0.8rem', backgroundColor: '#4b0082', color: 'white', borderRadius: '8px' }}>Login</button>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-        </form>
-      ) : (
-        <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '400px' }}>
-          <input placeholder="Username" required onChange={e => setForm({ ...form, username: e.target.value })} />
-          <input placeholder="RAM (MB)" type="number" required onChange={e => setForm({ ...form, ram: e.target.value })} />
-          <input placeholder="CPU (%)" type="number" required onChange={e => setForm({ ...form, cpu: e.target.value })} />
-          <button style={{ padding: '0.8rem', backgroundColor: '#4b0082', color: 'white', borderRadius: '8px' }}>Deploy</button>
-        </form>
-      )}
+        {!login ? (
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <input type="text" placeholder="Username" required value={inputLogin.username}
+              onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })}
+              style={inputStyle}
+            />
+            <input type="password" placeholder="Password" required value={inputLogin.password}
+              onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })}
+              style={inputStyle}
+            />
+            <button style={btnStyle}>Login</button>
+            {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
+          </form>
+        ) : !result ? (
+          <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <input type="text" placeholder="Username Panel" required value={form.username}
+              onChange={e => setForm({ ...form, username: e.target.value })}
+              style={inputStyle}
+            />
+            <input type="number" placeholder="RAM (MB) - 0 = Unlimited" required value={form.ram}
+              onChange={e => setForm({ ...form, ram: e.target.value })}
+              style={inputStyle}
+            />
+            <input type="number" placeholder="CPU (%) - 0 = Unlimited" required value={form.cpu}
+              onChange={e => setForm({ ...form, cpu: e.target.value })}
+              style={inputStyle}
+            />
+            <button style={btnStyle}>Deploy Sekarang</button>
+          </form>
+        ) : (
+          <>
+            <div style={{
+              background: '#f7f7f7',
+              padding: '1rem',
+              borderRadius: '12px',
+              marginTop: '1rem',
+              fontSize: '0.95rem',
+              whiteSpace: 'pre-wrap',
+              minHeight: '250px'
+            }}>
+              {displayedText || '⌛ Menampilkan hasil deploy...'}
+            </div>
+            <button onClick={handleCopy} style={{ ...btnStyle, marginTop: '1rem' }}>
+              📋 Salin Detail
+            </button>
+            {copied && <p style={{ color: 'green', marginTop: '0.5rem', textAlign: 'center' }}>✅ Berhasil Disalin</p>}
+          </>
+        )}
 
-      {result && (
-        <div style={{
-          marginTop: '2rem',
-          background: 'white',
-          borderRadius: '12px',
-          padding: '1.5rem',
-          boxShadow: '0 0 15px rgba(0,0,0,0.1)',
-          maxWidth: '600px',
-          width: '100%',
-          position: 'relative'
-        }}>
-          <h2 style={{ marginBottom: '1rem', color: '#4b0082' }}>🎉 AKUN BERHASIL DIBUAT 🎉</h2>
-          <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
-{`👤 Username: ${result.username}
-🔐 Password: ${result.password}
-🖥️ Server ID: ${result.serverId}
-🌐 Host: ${result.host}
-
-💾 RAM: ${result.ram === '0' ? 'Unlimited' : result.ram + ' MB'}
-⚙️ CPU: ${result.cpu === '0' ? 'Unlimited' : result.cpu + '%'}
-📊 Status: ${result.status}
-📅 Dibuat: ${result.createdAt}
-⏳ Aktif 30 Hari
-📆 Expired: ${result.expiredAt}
-
-🚫 Jangan gunakan untuk aktivitas ilegal:
-• DDoS / Flood / Serangan ke Server
-• Penipuan, Carding, atau Abuse Layanan
-• Phishing / Malware
-
-📌 Jika melanggar, server akan otomatis dihapus tanpa pemberitahuan!`}
-          </pre>
-          <button onClick={handleCopy} style={{
-            marginTop: '1rem',
-            padding: '0.6rem 1rem',
-            backgroundColor: '#4b0082',
-            color: 'white',
-            borderRadius: '8px',
-            border: 'none'
-          }}>📋 Salin Detail</button>
-          {copied && <p style={{ color: 'green', marginTop: '0.5rem' }}>✅ Berhasil Disalin</p>}
-        </div>
-      )}
+        <p style={{ marginTop: '2rem', fontSize: '0.85rem', textAlign: 'center', color: '#888' }}>
+          👑 Author: <b>IKYY</b>
+        </p>
+      </div>
     </div>
   )
-        }
+}
+
+const inputStyle = {
+  padding: '0.9rem',
+  borderRadius: '10px',
+  border: '1px solid #ccc',
+  fontSize: '1rem'
+}
+
+const btnStyle = {
+  padding: '0.9rem',
+  backgroundColor: '#4b0082',
+  color: 'white',
+  border: 'none',
+  borderRadius: '10px',
+  fontSize: '1rem',
+  cursor: 'pointer'
+          }
