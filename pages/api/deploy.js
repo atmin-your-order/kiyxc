@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   const { username, ram, cpu } = req.body
   if (!username || !ram || !cpu) return res.status(400).json({ error: 'Semua field wajib diisi' })
 
-  const panel = 'https://kenjapublicantiddos.freezee.biz.id/'
+  const panel = 'https://kenjapublicantiddos.freezee.biz.id'
   const apiKey = 'ptla_23LI2QemzEAnAVEt1gvqG1B6Finqntn32kpRSks26Nl'
   const password = crypto.randomBytes(3).toString('hex')
   const ramInt = parseInt(ram)
