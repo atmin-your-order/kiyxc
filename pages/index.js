@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react'
 
 const users = [
-  ['admin123', 'kiyy'],
-  ['testpass', 'tester']
+  ['iky123', 'iky'],
+  ['amane01', 'amane']
 ]
 
 export default function Home() {
@@ -51,8 +51,7 @@ export default function Home() {
 
 👤 Username: ${result.username}
 🔐 Password: ${result.password}
-🖥️ Server ID: ${result.serverId || 'Tidak tersedia'}
-🌐 Host: ${result.host || 'Tidak tersedia'}
+🌐 Host: ${result.panel || 'Tidak tersedia'}
 
 💾 RAM: ${result.ram == 0 ? 'Unlimited' : `${result.ram} MB`}
 ⚙️ CPU: ${result.cpu == 0 ? 'Unlimited' : `${result.cpu}%`}
