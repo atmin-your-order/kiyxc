@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react'
 
 const users = [
-  ['admin123', 'kiyy'],
-  ['testpass', 'tester']
+  ['iky123', 'iky'],
+  ['amane01', 'amane']
 ]
 
 export default function Home() {
