@@ -1,3 +1,4 @@
+// pages/index.js
 import { useState, useEffect } from 'react'
 
 const users = [
@@ -10,22 +11,9 @@ export default function Home() {
   const [inputLogin, setInputLogin] = useState({ username: '', password: '' })
   const [form, setForm] = useState({ username: '', ram: '', cpu: '' })
   const [result, setResult] = useState(null)
-  const [typedResult, setTypedResult] = useState('')
   const [error, setError] = useState('')
-  const [copied, setCopied] = useState(false)
-  const [copyText, setCopyText] = useState('')
-
-  const plans = {
-    PEMULA: { ram: 1024, cpu: 50 },
-    HEBAT: { ram: 2048, cpu: 100 },
-    ELITE: { ram: 4096, cpu: 200 },
-    SULTAN: { ram: 8192, cpu: 300 },
-    K: { ram: 0, cpu: 0 }, // unlimited
-  }
-
-  const formatDate = (date) => {
-    return new Intl.DateTimeFormat('id-ID').format(date)
-  }
+  const [typedResult, setTypedResult] = useState('')
+  const [isTyping, setIsTyping] = useState(false)
 
   const handleLogin = (e) => {
     e.preventDefault()
@@ -40,40 +28,38 @@ export default function Home() {
 
   const handleDeploy = async (e) => {
     e.preventDefault()
-
     const res = await fetch('/api/deploy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form)
     })
-
     const data = await res.json()
     setResult(data)
-    setTypedResult('') // Reset sebelum ketik ulang
-    setCopyText('') // Reset copy text
+    setTypedResult('')
+    setIsTyping(true)
+  }
 
-    if (data) {
-      const now = new Date()
-      const expire = new Date(now)
-      expire.setDate(now.getDate() + 30)
+  useEffect(() => {
+    if (result && isTyping) {
+      const createdAt = new Date()
+      const expireAt = new Date(createdAt)
+      expireAt.setDate(expireAt.getDate() + 30)
 
-      const ram = data.ram == 0 ? 'Unlimited' : `${data.ram} MB`
-      const cpu = data.cpu == 0 ? 'Unlimited' : `${data.cpu}%`
+      const formatDate = (d) => d.toLocaleDateString('id-ID')
 
-      const output = `
-🔥 AKUN BERHASIL DIBUAT 🔥
+      const output = `🔥 AKUN BERHASIL DIBUAT 🔥
 
-👤 Username: ${data.username}
-🔐 Password: ${data.password}
-🖥️ Server ID: ${data.serverId}
-🌐 Host: ${data.host}
+👤 Username: ${result.username}
+🔐 Password: ${result.password}
+🖥️ Server ID: ${result.serverId || 'Tidak tersedia'}
+🌐 Host: ${result.host || 'Tidak tersedia'}
 
-💾 RAM: ${ram}
-⚙️ CPU: ${cpu}
+💾 RAM: ${result.ram == 0 ? 'Unlimited' : `${result.ram} MB`}
+⚙️ CPU: ${result.cpu == 0 ? 'Unlimited' : `${result.cpu}%`}
 📊 Status: Aktif ✅
-📅 Dibuat: ${formatDate(now)}
+📅 Dibuat: ${formatDate(createdAt)}
 ⏳ Aktif 30 Hari
-📆 Expired: ${formatDate(expire)}
+📆 Expired: ${formatDate(expireAt)}
 
 🚫 Jangan gunakan untuk aktivitas ilegal:
 • DDoS / Flood / Serangan ke Server
@@ -83,36 +69,24 @@ export default function Home() {
 📌 Jika melanggar, server akan dihapus tanpa pemberitahuan!
 
 👑 Author: IKYY
-`.trim()
+`
 
-      setCopyText(output)
-
-      // animasi ketik
       let i = 0
-      const interval = setInterval(() => {
-        if (i <= output.length) {
-          setTypedResult(output.slice(0, i))
-          i++
-        } else {
-          clearInterval(interval)
+      const typing = setInterval(() => {
+        setTypedResult(output.slice(0, i))
+        i++
+        if (i > output.length) {
+          clearInterval(typing)
+          setIsTyping(false)
         }
       }, 10)
     }
-  }
+  }, [result, isTyping])
 
-  const handlePlan = (e) => {
-    const selected = e.target.value
-    const plan = plans[selected]
-    setForm({
-      ...form,
-      ram: plan.ram,
-      cpu: plan.cpu
-    })
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(typedResult)
+    alert('Berhasil Disalin ✅')
   }
-
-  useEffect(() => {
-    document.body.style.margin = 0
-  }, [])
 
   return (
     <div style={{
@@ -124,104 +98,86 @@ export default function Home() {
       justifyContent: 'center',
       fontFamily: 'Segoe UI, sans-serif',
       padding: '2rem',
-      animation: 'slideIn 1s ease'
+      animation: 'slideIn 0.6s ease'
     }}>
-      <style>{`
+      <style jsx>{`
         @keyframes slideIn {
-          from { opacity: 0; transform: translateX(-50px); }
+          from { opacity: 0; transform: translateX(-20px); }
           to { opacity: 1; transform: translateX(0); }
+        }
+        input, select {
+          padding: 1rem;
+          font-size: 1.1rem;
+          border-radius: 10px;
+          border: 1px solid #ccc;
+        }
+        button {
+          padding: 1rem;
+          font-size: 1.1rem;
+          background-color: #4b0082;
+          color: white;
+          border-radius: 10px;
+          border: none;
+          cursor: pointer;
+          transition: 0.2s;
+        }
+        button:hover {
+          background-color: #370061;
         }
       `}</style>
 
-      <h1 style={{ color: '#4b0082', marginBottom: '2rem', fontSize: '2rem', fontWeight: 'bold' }}>Deploy Panel Bot - By IKYY</h1>
+      <h1 style={{ color: '#4b0082', marginBottom: '2rem', fontSize: '2rem' }}>🚀 Deploy Panel Bot</h1>
 
       {!login ? (
-        <form onSubmit={handleLogin} style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1rem',
-          width: '100%',
-          maxWidth: '400px',
-          background: '#fff',
-          padding: '2rem',
-          borderRadius: '12px',
-          boxShadow: '0 0 15px rgba(0,0,0,0.1)'
-        }}>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
           <input placeholder="Username" required onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })} />
           <input placeholder="Password" type="password" required onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })} />
-          <button style={{ padding: '0.8rem', backgroundColor: '#4b0082', color: 'white', borderRadius: '8px' }}>Login</button>
+          <button>Login</button>
           {error && <p style={{ color: 'red' }}>{error}</p>}
         </form>
       ) : (
-        <form onSubmit={handleDeploy} style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1rem',
-          width: '100%',
-          maxWidth: '400px',
-          background: '#fff',
-          padding: '2rem',
-          borderRadius: '12px',
-          boxShadow: '0 0 15px rgba(0,0,0,0.1)'
-        }}>
+        <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
           <input placeholder="Username" required onChange={e => setForm({ ...form, username: e.target.value })} />
-
-          <select onChange={handlePlan} defaultValue="" required>
-            <option value="" disabled>Pilih Plan</option>
-            {Object.keys(plans).map(key => (
-              <option key={key} value={key}>{key}</option>
-            ))}
-          </select>
-
-          <input placeholder="RAM (MB)" type="number" required value={form.ram} disabled />
-          <input placeholder="CPU (%)" type="number" required value={form.cpu} disabled />
-
-          <p style={{ fontSize: '0.9rem', color: '#555' }}>💡 0 MB / 0% = Unlimited</p>
-          <button style={{ padding: '0.8rem', backgroundColor: '#4b0082', color: 'white', borderRadius: '8px' }}>Deploy</button>
+          <input placeholder="RAM (0 = Unlimited)" type="number" required onChange={e => setForm({ ...form, ram: e.target.value })} />
+          <input placeholder="CPU (0 = Unlimited)" type="number" required onChange={e => setForm({ ...form, cpu: e.target.value })} />
+          <button>Deploy</button>
         </form>
       )}
 
       {typedResult && (
-        <>
-          <pre style={{
-            marginTop: '2rem',
-            padding: '1.5rem',
-            background: 'white',
-            borderRadius: '12px',
-            maxWidth: '600px',
-            width: '100%',
-            overflowX: 'auto',
-            whiteSpace: 'pre-wrap',
-            boxShadow: '0 0 10px rgba(0,0,0,0.1)',
-            fontFamily: 'monospace',
-            fontSize: '0.95rem'
-          }}>
-            {typedResult}
-          </pre>
-
+        <div style={{
+          marginTop: '2rem',
+          background: 'white',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+          maxWidth: '600px',
+          width: '100%',
+          position: 'relative',
+          whiteSpace: 'pre-wrap',
+          fontSize: '1rem',
+          lineHeight: '1.6',
+          animation: 'slideIn 0.5s ease'
+        }}>
           <button
-            onClick={() => {
-              navigator.clipboard.writeText(copyText)
-              setCopied(true)
-              setTimeout(() => setCopied(false), 2000)
-            }}
+            onClick={copyToClipboard}
             style={{
-              marginTop: '1rem',
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              padding: '0.5rem 0.8rem',
+              fontSize: '0.9rem',
               backgroundColor: '#4b0082',
               color: 'white',
               border: 'none',
-              padding: '0.6rem 1.2rem',
               borderRadius: '8px',
-              fontWeight: 'bold',
               cursor: 'pointer'
-            }}
-          >
-            📋 Salin Detail Deploy
+            }}>
+            📋 Salin
           </button>
-
-          {copied && <p style={{ color: 'green', fontWeight: 'bold', marginTop: '0.5rem' }}>✅ Berhasil Disalin!</p>}
-        </>
+          {typedResult}
+        </div>
       )}
     </div>
   )
-                                                                           }
+        }
