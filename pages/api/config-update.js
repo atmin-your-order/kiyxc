@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST')
     return res.status(405).json({ error: 'Method not allowed' })
 
-  const configPath = path.resolve('./config.json')
+  const configPath = path.resolve('../../config.json')
 
   try {
     const { domain, apikey, nodeName, nestName, eggName } = req.body
