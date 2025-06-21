@@ -1,4 +1,3 @@
-// pages/index.js
 import { useState, useEffect } from 'react'
 
 const users = [
@@ -22,6 +21,7 @@ export default function Home() {
     if (found) {
       setLogin(true)
       setError('')
+      setForm({ username: '', ram: '', cpu: '' }) // kosongkan form deploy
     } else {
       setError('Username atau password salah!')
     }
@@ -39,6 +39,7 @@ export default function Home() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form)
     })
+
     const data = await res.json()
     setResult(data)
     setTypedResult('')
@@ -111,6 +112,19 @@ export default function Home() {
           from { opacity: 0; transform: translateX(-20px); }
           to { opacity: 1; transform: translateX(0); }
         }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .spinner {
+          width: 24px;
+          height: 24px;
+          border: 3px solid #fff;
+          border-top: 3px solid #4b0082;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+          margin-left: 10px;
+        }
         input, select {
           padding: 1rem;
           font-size: 1.1rem;
@@ -147,11 +161,16 @@ export default function Home() {
         </form>
       ) : (
         <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
-          <input placeholder="Username" required onChange={e => setForm({ ...form, username: e.target.value })} />
-          <input placeholder="RAM (0 = Unlimited)" type="number" required onChange={e => setForm({ ...form, ram: e.target.value })} />
-          <input placeholder="CPU (0 = Unlimited)" type="number" required onChange={e => setForm({ ...form, cpu: e.target.value })} />
-          <button disabled={isLoading}>
-            {isLoading ? 'Akun Anda sedang dibuat...' : 'Deploy'}
+          <input placeholder="Username" required value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} />
+          <input placeholder="RAM (0 = Unlimited)" type="number" required value={form.ram} onChange={e => setForm({ ...form, ram: e.target.value })} />
+          <input placeholder="CPU (0 = Unlimited)" type="number" required value={form.cpu} onChange={e => setForm({ ...form, cpu: e.target.value })} />
+          <button disabled={isLoading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {isLoading ? (
+              <>
+                Membuat Akun...
+                <div className="spinner" />
+              </>
+            ) : 'Deploy'}
           </button>
         </form>
       )}
