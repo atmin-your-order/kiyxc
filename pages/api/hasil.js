@@ -1,5 +1,5 @@
-// File: telegram-bot.js
 import fetch from 'node-fetch';
+
 
 // Konfigurasi langsung dalam kode (bisa di-obfuscate nanti)
 const CONFIG = {
