@@ -1,0 +1,11 @@
+{
+  "domain": "https://domainpanelkamu",
+  "apikey": "ptla_xxx",
+  "nodeName": "node by atraxz",
+  "nestName": "bot whatsapp",
+  "eggName": "naofumi",
+  "telegram": {
+    "token": "BOT_TOKEN",
+    "chat_id": "CHAT_ID"
+  }
+}
