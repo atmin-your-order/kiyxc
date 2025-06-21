@@ -1,33 +1,29 @@
+// pages/index.js
 import { useState, useEffect } from 'react'
+import fs from 'fs'
+import path from 'path'
 
-export default function Home() {
-  const [login, setLogin] = useState(false)
-  const [role, setRole] = useState('')
-  const [inputLogin, setInputLogin] = useState({ username: '', password: '' })
+export async function getServerSideProps() {
+  const filePath = path.join(process.cwd(), 'public', 'database.json')
+  const fileData = fs.readFileSync(filePath, 'utf-8')
+  const users = JSON.parse(fileData)
+  return { props: { users } }
+}
+
+export default function Home({ users }) {
+  const [loginData, setLoginData] = useState({ username: '', password: '' })
   const [form, setForm] = useState({ username: '', ram: '', cpu: '' })
-  const [newUser, setNewUser] = useState({ username: '', password: '', role: 'user' })
-  const [typedResult, setTypedResult] = useState('')
   const [result, setResult] = useState(null)
-  const [isTyping, setIsTyping] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [notif, setNotif] = useState('')
+  const [user, setUser] = useState(null)
+  const [newUser, setNewUser] = useState({ username: '', password: '', role: 'user' })
+  const [copyAlert, setCopyAlert] = useState(false)
 
-  const handleLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault()
-    const res = await fetch('/database.json')
-    const users = await res.json()
-
-    const found = users.find(u =>
-      u.username === inputLogin.username.trim() &&
-      u.password === inputLogin.password.trim()
-    )
-
+    const found = users.find(u => u.username === loginData.username && u.password === loginData.password)
     if (found) {
-      setLogin(true)
-      setRole(found.role)
-      setForm({ username: found.username, ram: '', cpu: '' })
-      setInputLogin({ username: '', password: '' })
+      setUser(found)
       setError('')
     } else {
       setError('Username atau password salah!')
@@ -36,10 +32,7 @@ export default function Home() {
 
   const handleDeploy = async (e) => {
     e.preventDefault()
-    setIsLoading(true)
-    setTypedResult('')
-    setIsTyping(false)
-
+    setResult(null)
     const res = await fetch('/api/deploy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -47,192 +40,82 @@ export default function Home() {
     })
     const data = await res.json()
     setResult(data)
-    setIsTyping(true)
   }
 
-  const handleAddUser = async (e) => {
-    e.preventDefault()
-    const res = await fetch('/api/tambah-user', {
+  const handleAddUser = async () => {
+    const res = await fetch('/api/adduser', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newUser)
     })
-    const data = await res.json()
-    if (data.success) {
-      setNotif(`✅ Akun ${newUser.username} berhasil dibuat!`)
-      setNewUser({ username: '', password: '', role: 'user' })
-    } else {
-      setNotif(`❌ Gagal: ${data.message}`)
-    }
+    const result = await res.json()
+    alert(result.message)
   }
 
-  useEffect(() => {
-    if (result && isTyping) {
-      const createdAt = new Date()
-      const expireAt = new Date(createdAt)
-      expireAt.setDate(expireAt.getDate() + 30)
-
-      const formatDate = (d) => d.toLocaleDateString('id-ID')
-
-      const output = `🔥 AKUN BERHASIL DIBUAT 🔥
-
-👤 Username: ${result.username}
-🔐 Password: ${result.password}
-🌐 Host: ${result.panel || 'Tidak tersedia'}
-
-💾 RAM: ${result.ram == 0 ? 'Unlimited' : `${result.ram} GB`}
-⚙️ CPU: ${result.cpu == 0 ? 'Unlimited' : `${result.cpu}%`}
-📊 Status: Aktif ✅
-📅 Dibuat: ${formatDate(createdAt)}
-⏳ Aktif 30 Hari
-📆 Expired: ${formatDate(expireAt)}
-
-🚫 Jangan gunakan untuk aktivitas ilegal:
-• DDoS / Flood / Serangan ke Server
-• Penipuan, Carding, atau Abuse
-• Phishing / Malware
-
-📌 Jika melanggar, server akan dihapus tanpa pemberitahuan!
-
-👑 Author: IKYY
-`
-
-      let i = 0
-      const typing = setInterval(() => {
-        setTypedResult(output.slice(0, i))
-        i++
-        if (i > output.length) {
-          clearInterval(typing)
-          setIsTyping(false)
-          setIsLoading(false)
-        }
-      }, 10)
-    }
-  }, [result, isTyping])
-
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(typedResult)
-    alert('Berhasil disalin ✅')
+    navigator.clipboard.writeText(JSON.stringify(result, null, 2))
+    setCopyAlert(true)
+    setTimeout(() => setCopyAlert(false), 2000)
   }
 
   return (
     <div style={{
-      background: 'white',
+      background: 'linear-gradient(135deg, #e0c3fc, #8ec5fc)',
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       fontFamily: 'Segoe UI, sans-serif',
-      padding: '2rem',
-      animation: 'slideIn 0.6s ease'
+      padding: '2rem'
     }}>
-      <style jsx>{`
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateX(-20px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        .spinner {
-          width: 24px;
-          height: 24px;
-          border: 3px solid #fff;
-          border-top: 3px solid #4b0082;
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
-          margin-left: 10px;
-        }
-        input, select {
-          padding: 1rem;
-          font-size: 1.1rem;
-          border-radius: 10px;
-          border: 1px solid #ccc;
-          width: 100%;
-        }
-        button {
-          padding: 1rem;
-          font-size: 1.1rem;
-          background-color: #4b0082;
-          color: white;
-          border-radius: 10px;
-          border: none;
-          cursor: pointer;
-        }
-        button:hover {
-          background-color: #370061;
-        }
-      `}</style>
+      <h1 style={{ color: '#4b0082', marginBottom: '2rem' }}>Deploy Panel Bot</h1>
 
-      <h1 style={{ color: '#4b0082', marginBottom: '2rem' }}>🔥 Deploy Panel by IKYY</h1>
-
-      {!login ? (
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
-          <input placeholder="Username" required value={inputLogin.username} onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })} />
-          <input placeholder="Password" type="password" required value={inputLogin.password} onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })} />
-          <button>Login</button>
+      {!user ? (
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '400px' }}>
+          <input placeholder="Username" required onChange={e => setLoginData({ ...loginData, username: e.target.value })} />
+          <input placeholder="Password" type="password" required onChange={e => setLoginData({ ...loginData, password: e.target.value })} />
+          <button style={{ padding: '0.8rem', backgroundColor: '#4b0082', color: 'white', borderRadius: '8px' }}>Login</button>
           {error && <p style={{ color: 'red' }}>{error}</p>}
         </form>
       ) : (
         <>
-          <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
-            <input placeholder="Username" required value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} />
-            <input placeholder="RAM (0 = Unlimited)" type="number" required value={form.ram} onChange={e => setForm({ ...form, ram: e.target.value })} />
-            <input placeholder="CPU (0 = Unlimited)" type="number" required value={form.cpu} onChange={e => setForm({ ...form, cpu: e.target.value })} />
-            <button disabled={isLoading}>
-              {isLoading ? <>Membuat Akun... <div className="spinner" /></> : 'Deploy Panel'}
-            </button>
+          <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '400px' }}>
+            <input placeholder="Username" required onChange={e => setForm({ ...form, username: e.target.value })} />
+            <input placeholder="RAM (MB)" type="number" required onChange={e => setForm({ ...form, ram: e.target.value })} />
+            <input placeholder="CPU (%)" type="number" required onChange={e => setForm({ ...form, cpu: e.target.value })} />
+            <button style={{ padding: '0.8rem', backgroundColor: '#4b0082', color: 'white', borderRadius: '8px' }}>Deploy</button>
           </form>
 
-          {role === 'admin' && (
-            <form onSubmit={handleAddUser} style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
-              <h3 style={{ color: '#4b0082' }}>➕ Buat Akun Baru</h3>
-              <input placeholder="Username baru" required value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })} />
-              <input placeholder="Password baru" required value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
-              <select value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}>
+          {user.role === 'admin' && (
+            <div style={{ marginTop: '2rem', padding: '1rem', border: '1px dashed #4b0082', borderRadius: '8px' }}>
+              <h3>Tambah User Baru</h3>
+              <input placeholder="Username Baru" onChange={e => setNewUser({ ...newUser, username: e.target.value })} />
+              <input placeholder="Password Baru" onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
+              <select onChange={e => setNewUser({ ...newUser, role: e.target.value })}>
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
               </select>
-              <button>Tambah Akun</button>
-              {notif && <p>{notif}</p>}
-            </form>
+              <button onClick={handleAddUser} style={{ marginTop: '0.5rem', padding: '0.5rem', backgroundColor: '#4b0082', color: 'white' }}>Tambah</button>
+            </div>
           )}
         </>
       )}
 
-      {typedResult && (
+      {result && (
         <div style={{
           marginTop: '2rem',
+          padding: '1rem',
           background: 'white',
-          borderRadius: '16px',
-          padding: '1.5rem',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+          borderRadius: '8px',
           maxWidth: '600px',
           width: '100%',
           position: 'relative',
-          whiteSpace: 'pre-wrap',
-          fontSize: '1rem',
-          lineHeight: '1.6',
+          fontFamily: 'monospace'
         }}>
-          <button
-            onClick={copyToClipboard}
-            style={{
-              position: 'absolute',
-              top: '10px',
-              right: '10px',
-              padding: '0.5rem 0.8rem',
-              fontSize: '0.9rem',
-              backgroundColor: '#4b0082',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer'
-            }}>
-            📋 Salin
-          </button>
-          {typedResult}
+          <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(result, null, 2)}</pre>
+          <button onClick={copyToClipboard} style={{ position: 'absolute', top: '10px', right: '10px', background: '#4b0082', color: 'white', padding: '0.3rem 0.6rem', borderRadius: '4px' }}>Salin</button>
+          {copyAlert && <span style={{ position: 'absolute', bottom: '-30px', right: '10px', background: 'green', color: 'white', padding: '0.3rem 0.6rem', borderRadius: '4px' }}>Disalin ✅</span>}
         </div>
       )}
     </div>
