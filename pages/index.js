@@ -17,7 +17,12 @@ export default function Home() {
     e.preventDefault()
     const res = await fetch('/database.json')
     const users = await res.json()
-    const found = users.find(u => u.username === inputLogin.username && u.password === inputLogin.password)
+
+    const found = users.find(u =>
+      u.username === inputLogin.username.trim() &&
+      u.password === inputLogin.password.trim()
+    )
+
     if (found) {
       setLogin(true)
       setRole(found.role)
@@ -66,6 +71,7 @@ export default function Home() {
       const createdAt = new Date()
       const expireAt = new Date(createdAt)
       expireAt.setDate(expireAt.getDate() + 30)
+
       const formatDate = (d) => d.toLocaleDateString('id-ID')
 
       const output = `🔥 AKUN BERHASIL DIBUAT 🔥
@@ -144,6 +150,7 @@ export default function Home() {
           font-size: 1.1rem;
           border-radius: 10px;
           border: 1px solid #ccc;
+          width: 100%;
         }
         button {
           padding: 1rem;
@@ -159,7 +166,7 @@ export default function Home() {
         }
       `}</style>
 
-      <h1 style={{ color: '#4b0082', marginBottom: '2rem' }}>🔥 Panel Deploy by IKYY</h1>
+      <h1 style={{ color: '#4b0082', marginBottom: '2rem' }}>🔥 Deploy Panel by IKYY</h1>
 
       {!login ? (
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
@@ -183,7 +190,7 @@ export default function Home() {
             <form onSubmit={handleAddUser} style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
               <h3 style={{ color: '#4b0082' }}>➕ Buat Akun Baru</h3>
               <input placeholder="Username baru" required value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })} />
-              <input placeholder="Password baru" type="password" required value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
+              <input placeholder="Password baru" required value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
               <select value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}>
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
@@ -230,4 +237,4 @@ export default function Home() {
       )}
     </div>
   )
-}
+        }
