@@ -21,7 +21,7 @@ export default function Home() {
     if (found) {
       setLogin(true)
       setError('')
-      setForm({ username: '', ram: '', cpu: '' }) // kosongkan form deploy
+      setForm({ username: '', ram: '', cpu: '' })
     } else {
       setError('Username atau password salah!')
     }
@@ -60,7 +60,7 @@ export default function Home() {
 🔐 Password: ${result.password}
 🌐 Host: ${result.panel || 'Tidak tersedia'}
 
-💾 RAM: ${result.ram == 0 ? 'Unlimited' : `${result.ram} MB`}
+💾 RAM: ${result.ram == 0 ? 'Unlimited' : `${result.ram} GB`}
 ⚙️ CPU: ${result.cpu == 0 ? 'Unlimited' : `${result.cpu}%`}
 📊 Status: Aktif ✅
 📅 Dibuat: ${formatDate(createdAt)}
@@ -130,6 +130,7 @@ export default function Home() {
           font-size: 1.1rem;
           border-radius: 10px;
           border: 1px solid #ccc;
+          flex: 1;
         }
         button {
           padding: 1rem;
@@ -162,8 +163,31 @@ export default function Home() {
       ) : (
         <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
           <input placeholder="Username" required value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} />
-          <input placeholder="RAM (0 = Unlimited)" type="number" required value={form.ram} onChange={e => setForm({ ...form, ram: e.target.value })} />
-          <input placeholder="CPU (0 = Unlimited)" type="number" required value={form.cpu} onChange={e => setForm({ ...form, cpu: e.target.value })} />
+
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <input
+                placeholder="Contoh: 1"
+                type="number"
+                required
+                value={form.ram}
+                onChange={e => setForm({ ...form, ram: e.target.value })}
+              />
+              <span style={{ fontWeight: 'bold' }}>GB</span>
+            </div>
+            <label style={{ fontSize: '0.85rem', color: '#555', marginTop: '5px' }}>
+              Satuan RAM: 1 = 1GB | 0 = Unlimited
+            </label>
+          </div>
+
+          <input
+            placeholder="CPU (0 = Unlimited)"
+            type="number"
+            required
+            value={form.cpu}
+            onChange={e => setForm({ ...form, cpu: e.target.value })}
+          />
+
           <button disabled={isLoading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {isLoading ? (
               <>
@@ -211,4 +235,4 @@ export default function Home() {
       )}
     </div>
   )
-        }
+}
