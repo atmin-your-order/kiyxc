@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import config from '../../config.js'
+import config from '../../config.json'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET')
