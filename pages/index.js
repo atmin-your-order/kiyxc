@@ -1,31 +1,31 @@
-import { useState, useEffect } from 'react'
-import users from '../database.js'
+import { useEffect, useState } from 'react'
 
 export default function Home() {
   const [login, setLogin] = useState(false)
-  const [userData, setUserData] = useState(null)
   const [inputLogin, setInputLogin] = useState({ username: '', password: '' })
   const [form, setForm] = useState({ username: '', ram: '', cpu: '' })
-  const [adminForm, setAdminForm] = useState({ domain: '', apikey: '', nodeName: '', nestName: '', eggName: '' })
   const [result, setResult] = useState(null)
   const [typedResult, setTypedResult] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState('')
+  const [role, setRole] = useState('')
+  const [error, setError] = useState('')
+  const [newUser, setNewUser] = useState({ username: '', password: '', role: 'user' })
+  const [notif, setNotif] = useState('')
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault()
-    const found = users.find(u =>
-      u.username === inputLogin.username && u.password === inputLogin.password
-    )
+    const res = await fetch('/database.json')
+    const users = await res.json()
+    const found = users.find(u => u.username === inputLogin.username && u.password === inputLogin.password)
     if (found) {
       setLogin(true)
-      setUserData(found)
-      setInputLogin({ username: '', password: '' })
-      setForm({ username: '', ram: '', cpu: '' })
-      setMessage('')
+      setRole(found.role)
+      setInputLogin({ username: '', password: '' }) // Kosongkan input login
+      setForm({ username: found.username, ram: '', cpu: '' }) // Reset form deploy
+      setError('')
     } else {
-      setMessage('Username atau password salah!')
+      setError('Username atau password salah!')
     }
   }
 
@@ -44,18 +44,8 @@ export default function Home() {
 
     const data = await res.json()
     setResult(data)
+    setTypedResult('')
     setIsTyping(true)
-  }
-
-  const handleAdminSubmit = async (e) => {
-    e.preventDefault()
-    const res = await fetch('/api/config-update', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(adminForm)
-    })
-    const data = await res.json()
-    setMessage(data.success ? '✅ Config berhasil diupdate!' : '❌ Gagal update config: ' + data.error)
   }
 
   useEffect(() => {
@@ -63,6 +53,7 @@ export default function Home() {
       const createdAt = new Date()
       const expireAt = new Date(createdAt)
       expireAt.setDate(expireAt.getDate() + 30)
+
       const formatDate = (d) => d.toLocaleDateString('id-ID')
 
       const output = `🔥 AKUN BERHASIL DIBUAT 🔥
@@ -71,8 +62,8 @@ export default function Home() {
 🔐 Password: ${result.password}
 🌐 Host: ${result.panel || 'Tidak tersedia'}
 
-💾 RAM: ${result.ram === '0' || result.ram === 0 ? 'Unlimited' : result.ram + ' GB'}
-⚙️ CPU: ${result.cpu === '0' || result.cpu === 0 ? 'Unlimited' : result.cpu + '%'}
+💾 RAM: ${result.ram == 0 ? 'Unlimited' : `${result.ram} GB`}
+⚙️ CPU: ${result.cpu == 0 ? 'Unlimited' : `${result.cpu}%`}
 📊 Status: Aktif ✅
 📅 Dibuat: ${formatDate(createdAt)}
 ⏳ Aktif 30 Hari
@@ -106,6 +97,23 @@ export default function Home() {
     alert('Berhasil Disalin ✅')
   }
 
+  const handleAddUser = async (e) => {
+    e.preventDefault()
+    setNotif('')
+    const res = await fetch('/api/add-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newUser)
+    })
+    const data = await res.json()
+    if (data.success) {
+      setNotif('✅ User berhasil ditambahkan!')
+      setNewUser({ username: '', password: '', role: 'user' })
+    } else {
+      setNotif(`❌ Gagal: ${data.error}`)
+    }
+  }
+
   return (
     <div style={{
       background: 'linear-gradient(135deg, #e0c3fc, #8ec5fc)',
@@ -116,16 +124,16 @@ export default function Home() {
       justifyContent: 'center',
       fontFamily: 'Segoe UI, sans-serif',
       padding: '2rem',
-      animation: 'fadeInSlide 0.6s ease-out'
+      animation: 'slideIn 0.6s ease'
     }}>
       <style jsx>{`
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateX(-20px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
-        }
-        @keyframes fadeInSlide {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
         }
         .spinner {
           width: 24px;
@@ -162,44 +170,31 @@ export default function Home() {
         }
       `}</style>
 
-      <h1 style={{ color: '#4b0082', marginBottom: '2rem', fontSize: '2rem' }}>🚀 Panel Bot</h1>
+      <h1 style={{ color: '#4b0082', marginBottom: '2rem', fontSize: '2rem' }}>🚀 Deploy Panel Bot</h1>
 
       {!login ? (
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '450px' }}>
-          <input placeholder="Username" value={inputLogin.username} required onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })} />
-          <input placeholder="Password" type="password" value={inputLogin.password} required onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })} />
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
+          <input placeholder="Username" required value={inputLogin.username} onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })} />
+          <input placeholder="Password" type="password" required value={inputLogin.password} onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })} />
           <button>Login</button>
-          {message && <p style={{ color: 'red' }}>{message}</p>}
+          {error && <p style={{ color: 'red' }}>{error}</p>}
         </form>
-      ) : userData?.role === 'admin' ? (
-        <form onSubmit={handleAdminSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '500px' }}>
-          <h2 style={{ color: '#4b0082' }}>⚙️ Admin Config Panel</h2>
-          <input placeholder="Domain Panel" required onChange={e => setAdminForm({ ...adminForm, domain: e.target.value })} />
-          <input placeholder="API Key" required onChange={e => setAdminForm({ ...adminForm, apikey: e.target.value })} />
-          <input placeholder="Nama Node" required onChange={e => setAdminForm({ ...adminForm, nodeName: e.target.value })} />
-          <input placeholder="Nama Nest" required onChange={e => setAdminForm({ ...adminForm, nestName: e.target.value })} />
-          <input placeholder="Nama Egg" required onChange={e => setAdminForm({ ...adminForm, eggName: e.target.value })} />
-          <button>Simpan Config</button>
-          {message && <p>{message}</p>}
+      ) : role === 'admin' ? (
+        <form onSubmit={handleAddUser} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '450px', width: '100%' }}>
+          <h3>👑 Admin Panel — Tambah User</h3>
+          <input placeholder="Username Baru" required value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })} />
+          <input placeholder="Password Baru" required value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
+          <select value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}>
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button>Tambah Akun</button>
+          {notif && <p>{notif}</p>}
         </form>
       ) : (
-        <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '450px' }}>
+        <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
           <input placeholder="Username" required value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} />
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <input
-                placeholder="Contoh: 1"
-                type="number"
-                required
-                value={form.ram}
-                onChange={e => setForm({ ...form, ram: e.target.value })}
-              />
-              <span style={{ fontWeight: 'bold' }}>GB</span>
-            </div>
-            <label style={{ fontSize: '0.85rem', color: '#555', marginTop: '5px' }}>
-              Satuan RAM: 1 = 1GB | 0 = Unlimited
-            </label>
-          </div>
+          <input placeholder="RAM (0 = Unlimited)" type="number" required value={form.ram} onChange={e => setForm({ ...form, ram: e.target.value })} />
           <input placeholder="CPU (0 = Unlimited)" type="number" required value={form.cpu} onChange={e => setForm({ ...form, cpu: e.target.value })} />
           <button disabled={isLoading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {isLoading ? <>Membuat Akun...<div className="spinner" /></> : 'Deploy'}
@@ -219,7 +214,8 @@ export default function Home() {
           position: 'relative',
           whiteSpace: 'pre-wrap',
           fontSize: '1rem',
-          lineHeight: '1.6'
+          lineHeight: '1.6',
+          animation: 'slideIn 0.5s ease'
         }}>
           <button
             onClick={copyToClipboard}
