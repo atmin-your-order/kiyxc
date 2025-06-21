@@ -1,7 +1,11 @@
 module.exports = {
-  domain: 'https://kenjapublicantiddos.freezee.biz.id',
-  apikey: 'ptla_23LI2QemzEAnAVEt1gvqG1B6Finqntn32kpRSks26Nl',
+  domain: 'https://DOMAINPANELKAMU',
+  apikey: 'APIKEY_PLTA',
   nodeName: 'node by atraxz',
   nestName: 'bot whatsapp',
-  eggName: 'naofumi'
+  eggName: 'naofumi',
+  telegram: {
+    token: 'BOT_TOKEN',
+    chat_id: 'CHAT_ID'
+  }
 }
