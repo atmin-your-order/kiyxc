@@ -21,7 +21,8 @@ export default function Home() {
     if (found) {
       setLogin(true)
       setUserData(found)
-      setForm({ ...form, username: found.username })
+      setInputLogin({ username: '', password: '' })
+      setForm({ username: '', ram: '', cpu: '' })
       setMessage('')
     } else {
       setMessage('Username atau password salah!')
@@ -62,7 +63,6 @@ export default function Home() {
       const createdAt = new Date()
       const expireAt = new Date(createdAt)
       expireAt.setDate(expireAt.getDate() + 30)
-
       const formatDate = (d) => d.toLocaleDateString('id-ID')
 
       const output = `🔥 AKUN BERHASIL DIBUAT 🔥
@@ -71,8 +71,8 @@ export default function Home() {
 🔐 Password: ${result.password}
 🌐 Host: ${result.panel || 'Tidak tersedia'}
 
-💾 RAM: ${result.ram}
-⚙️ CPU: ${result.cpu}
+💾 RAM: ${result.ram === '0' || result.ram === 0 ? 'Unlimited' : result.ram + ' GB'}
+⚙️ CPU: ${result.cpu === '0' || result.cpu === 0 ? 'Unlimited' : result.cpu + '%'}
 📊 Status: Aktif ✅
 📅 Dibuat: ${formatDate(createdAt)}
 ⏳ Aktif 30 Hari
@@ -87,6 +87,7 @@ export default function Home() {
 
 👑 Author: IKYY
 `
+
       let i = 0
       const typing = setInterval(() => {
         setTypedResult(output.slice(0, i))
@@ -114,12 +115,17 @@ export default function Home() {
       alignItems: 'center',
       justifyContent: 'center',
       fontFamily: 'Segoe UI, sans-serif',
-      padding: '2rem'
+      padding: '2rem',
+      animation: 'fadeInSlide 0.6s ease-out'
     }}>
       <style jsx>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        @keyframes fadeInSlide {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         .spinner {
           width: 24px;
@@ -156,12 +162,12 @@ export default function Home() {
         }
       `}</style>
 
-      <h1 style={{ color: '#4b0082', marginBottom: '2rem' }}>🚀 Panel Bot</h1>
+      <h1 style={{ color: '#4b0082', marginBottom: '2rem', fontSize: '2rem' }}>🚀 Panel Bot</h1>
 
       {!login ? (
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '450px' }}>
-          <input placeholder="Username" required onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })} />
-          <input placeholder="Password" type="password" required onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })} />
+          <input placeholder="Username" value={inputLogin.username} required onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })} />
+          <input placeholder="Password" type="password" value={inputLogin.password} required onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })} />
           <button>Login</button>
           {message && <p style={{ color: 'red' }}>{message}</p>}
         </form>
@@ -178,8 +184,7 @@ export default function Home() {
         </form>
       ) : (
         <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '450px' }}>
-          <input placeholder="Username" readOnly value={form.username} />
-
+          <input placeholder="Username" required value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <input
@@ -195,15 +200,7 @@ export default function Home() {
               Satuan RAM: 1 = 1GB | 0 = Unlimited
             </label>
           </div>
-
-          <input
-            placeholder="CPU (0 = Unlimited)"
-            type="number"
-            required
-            value={form.cpu}
-            onChange={e => setForm({ ...form, cpu: e.target.value })}
-          />
-
+          <input placeholder="CPU (0 = Unlimited)" type="number" required value={form.cpu} onChange={e => setForm({ ...form, cpu: e.target.value })} />
           <button disabled={isLoading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {isLoading ? <>Membuat Akun...<div className="spinner" /></> : 'Deploy'}
           </button>
@@ -245,4 +242,4 @@ export default function Home() {
       )}
     </div>
   )
-                                                           }
+        }
