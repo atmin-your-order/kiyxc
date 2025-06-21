@@ -1,1 +1,140 @@
-(function(_0x451bad,_0x5681e9){const _0xd75b49=_0x58a3,_0x1024e5=_0x451bad();while(!![]){try{const _0x228505=parseInt(_0xd75b49(0x1be))/0x1*(parseInt(_0xd75b49(0x1b9))/0x2)+parseInt(_0xd75b49(0x1e6))/0x3*(-parseInt(_0xd75b49(0x1cd))/0x4)+-parseInt(_0xd75b49(0x1da))/0x5+-parseInt(_0xd75b49(0x1ba))/0x6+-parseInt(_0xd75b49(0x1d8))/0x7+parseInt(_0xd75b49(0x1c7))/0x8+parseInt(_0xd75b49(0x1e3))/0x9*(parseInt(_0xd75b49(0x1bc))/0xa);if(_0x228505===_0x5681e9)break;else _0x1024e5['push'](_0x1024e5['shift']());}catch(_0x2d5e6c){_0x1024e5['push'](_0x1024e5['shift']());}}}(_0x3537,0x1d9bd));function _0x3537(){const _0x1271ab=['6410kLwgEx','POST','29VzTxVa','status','/api/application/nodes','Bearer\x20','message','\x20MB','\x20Server','stringify','Bot','101976ShYusi','apikey','/allocations','errors','hex','npm','224vtjSYN','method','Node\x20tidak\x20ditemukan','name','randomBytes','json','data','nestName','Method\x20not\x20allowed','nodeName','ghcr.io/parkervcp/yolks:nodejs_18','73605bgjYHB','assigned','1053970YReHrF','/api/application/nests/','toLowerCase','/eggs','domain','npm\x20start','attributes','/api/application/servers','Egg\x20tidak\x20ditemukan','5067ovuiYR','/api/application/nodes/','body','4242rqTAjE','find','12422stTlhI','791874iUcKLE','application/json'];_0x3537=function(){return _0x1271ab;};return _0x3537();}import _0x32b355 from'crypto';import _0x443089 from'../../config.js';function _0x58a3(_0x40e495,_0x3bc6a4){const _0x35378c=_0x3537();return _0x58a3=function(_0x58a342,_0x380466){_0x58a342=_0x58a342-0x1b9;let _0x2a6d04=_0x35378c[_0x58a342];return _0x2a6d04;},_0x58a3(_0x40e495,_0x3bc6a4);}export default async function handler(_0x2b85de,_0x1b2c5b){const _0x1b75d7=_0x58a3;if(_0x2b85de[_0x1b75d7(0x1ce)]!==_0x1b75d7(0x1bd))return _0x1b2c5b[_0x1b75d7(0x1bf)](0x195)['json']({'error':_0x1b75d7(0x1d5)});const {username:_0x2bbfbf,ram:_0x56e596,cpu:_0x55fdd4}=_0x2b85de[_0x1b75d7(0x1e5)];if(!_0x2bbfbf||!_0x56e596||!_0x55fdd4)return _0x1b2c5b[_0x1b75d7(0x1bf)](0x190)['json']({'error':'Semua\x20field\x20wajib\x20diisi'});const _0x226501=_0x443089[_0x1b75d7(0x1de)],_0x3dfd8c=_0x443089[_0x1b75d7(0x1c8)],_0x1e63a4=_0x443089[_0x1b75d7(0x1d6)][_0x1b75d7(0x1dc)](),_0x2eb26f=_0x443089[_0x1b75d7(0x1d4)][_0x1b75d7(0x1dc)](),_0x879893=_0x443089['eggName']['toLowerCase'](),_0x4ebcb5=_0x32b355[_0x1b75d7(0x1d1)](0x3)['toString'](_0x1b75d7(0x1cb)),_0xb6f97=parseInt(_0x56e596),_0x637d89=parseInt(_0x55fdd4),_0x530896=_0xb6f97,_0x207e40=_0x2bbfbf[_0x1b75d7(0x1dc)](),_0x1e0d02={'Authorization':_0x1b75d7(0x1c1)+_0x3dfd8c,'Accept':_0x1b75d7(0x1bb),'Content-Type':_0x1b75d7(0x1bb)};try{const _0x22eca5=await fetch(_0x226501+_0x1b75d7(0x1c0),{'headers':_0x1e0d02}),_0x30b783=await _0x22eca5[_0x1b75d7(0x1d2)](),_0x41053c=_0x30b783['data']['find'](_0x2b8706=>_0x2b8706['attributes']['name'][_0x1b75d7(0x1dc)]()===_0x1e63a4);if(!_0x41053c)return _0x1b2c5b['status'](0x194)['json']({'error':_0x1b75d7(0x1cf)});const _0x1a2dba=_0x41053c['attributes']['id'],_0x467c42=await fetch(_0x226501+_0x1b75d7(0x1e4)+_0x1a2dba+_0x1b75d7(0x1c9),{'headers':_0x1e0d02}),_0x1e2a4f=await _0x467c42[_0x1b75d7(0x1d2)](),_0x43a515=_0x1e2a4f[_0x1b75d7(0x1d3)][_0x1b75d7(0x1e7)](_0x594698=>!_0x594698['attributes'][_0x1b75d7(0x1d9)]);if(!_0x43a515)return _0x1b2c5b['status'](0x194)[_0x1b75d7(0x1d2)]({'error':'Allocation\x20kosong\x20tidak\x20tersedia'});const _0x3ff135=_0x43a515['attributes']['id'],_0xf3db42=await fetch(_0x226501+'/api/application/nests',{'headers':_0x1e0d02}),_0x5a2099=await _0xf3db42[_0x1b75d7(0x1d2)](),_0x3b24f7=_0x5a2099[_0x1b75d7(0x1d3)][_0x1b75d7(0x1e7)](_0x1cc9a3=>_0x1cc9a3['attributes'][_0x1b75d7(0x1d0)][_0x1b75d7(0x1dc)]()===_0x2eb26f);if(!_0x3b24f7)return _0x1b2c5b['status'](0x194)[_0x1b75d7(0x1d2)]({'error':'Nest\x20tidak\x20ditemukan'});const _0x2bbb81=_0x3b24f7['attributes']['id'],_0x48659f=await fetch(_0x226501+_0x1b75d7(0x1db)+_0x2bbb81+_0x1b75d7(0x1dd),{'headers':_0x1e0d02}),_0x482ad7=await _0x48659f[_0x1b75d7(0x1d2)](),_0x56e716=_0x482ad7['data']['find'](_0x5d3233=>_0x5d3233[_0x1b75d7(0x1e0)][_0x1b75d7(0x1d0)][_0x1b75d7(0x1dc)]()===_0x879893);if(!_0x56e716)return _0x1b2c5b['status'](0x194)['json']({'error':_0x1b75d7(0x1e2)});const _0x2b65a2=_0x56e716['attributes']['id'],_0x2fd93c=_0x56e716[_0x1b75d7(0x1e0)]['startup'],_0x3e86bf=await fetch(_0x226501+'/api/application/users',{'method':_0x1b75d7(0x1bd),'headers':_0x1e0d02,'body':JSON[_0x1b75d7(0x1c5)]({'email':_0x207e40+'@gmail.com','username':_0x207e40,'first_name':_0x207e40+'\x20Server','last_name':_0x1b75d7(0x1c6),'language':'en','password':_0x4ebcb5})}),_0x53a974=await _0x3e86bf[_0x1b75d7(0x1d2)]();if(_0x53a974['errors'])return _0x1b2c5b['status'](0x190)[_0x1b75d7(0x1d2)]({'error':_0x53a974[_0x1b75d7(0x1ca)][0x0]});const _0x4c00bb=_0x53a974[_0x1b75d7(0x1e0)]['id'],_0x49ba9a=await fetch(_0x226501+_0x1b75d7(0x1e1),{'method':_0x1b75d7(0x1bd),'headers':_0x1e0d02,'body':JSON['stringify']({'name':_0x207e40+_0x1b75d7(0x1c4),'user':_0x4c00bb,'egg':_0x2b65a2,'nest':_0x2bbb81,'startup':_0x2fd93c,'docker_image':_0x1b75d7(0x1d7),'environment':{'INST':_0x1b75d7(0x1cc),'USER_UPLOAD':'0','AUTO_UPDATE':'0','CMD_RUN':_0x1b75d7(0x1df)},'limits':{'memory':_0xb6f97,'swap':0x0,'disk':_0x530896,'io':0x1f4,'cpu':_0x637d89},'feature_limits':{'databases':0x2,'backups':0x2,'allocations':0x1},'deploy':{'locations':[_0x1a2dba],'dedicated_ip':![],'port_range':[]},'allocation':_0x3ff135})}),_0x18e051=await _0x49ba9a['json']();if(_0x18e051[_0x1b75d7(0x1ca)])return _0x1b2c5b[_0x1b75d7(0x1bf)](0x190)['json']({'error':_0x18e051[_0x1b75d7(0x1ca)][0x0]});_0x1b2c5b['status'](0xc8)[_0x1b75d7(0x1d2)]({'success':!![],'username':_0x207e40,'password':_0x4ebcb5,'ram':_0xb6f97+_0x1b75d7(0x1c3),'cpu':_0x637d89+'%','disk':_0x530896+_0x1b75d7(0x1c3),'panel':_0x226501});}catch(_0x4abb74){_0x1b2c5b['status'](0x1f4)[_0x1b75d7(0x1d2)]({'error':'Terjadi\x20error','detail':_0x4abb74[_0x1b75d7(0x1c2)]});}}
+import crypto from 'crypto'
+import config from '../../config.js'
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Method not allowed' })
+  }
+
+  const { username, ram, cpu } = req.body
+  if (!username || !ram || !cpu) {
+    return res.status(400).json({ success: false, error: 'Semua field wajib diisi' })
+  }
+
+  const panel = config.domain
+  const apiKey = config.apikey
+  const nodeName = config.nodeName.toLowerCase()
+  const nestName = config.nestName.toLowerCase()
+  const eggName = config.eggName.toLowerCase()
+  const password = crypto.randomBytes(3).toString('hex')
+  const ramInt = parseInt(ram)
+  const cpuInt = parseInt(cpu)
+  const disk = ramInt
+  const user = username.toLowerCase()
+
+  const headers = {
+    'Authorization': `Bearer ${apiKey}`,
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
+  }
+
+  try {
+    // GET NODE
+    const nodeRes = await fetch(`${panel}/api/application/nodes`, { headers })
+    const nodeJson = await nodeRes.json()
+    const node = nodeJson.data.find(n => n.attributes.name.toLowerCase() === nodeName)
+    if (!node) return res.status(404).json({ success: false, error: 'Node tidak ditemukan' })
+    const nodeId = node.attributes.id
+
+    // GET ALLOCATION
+    const allocRes = await fetch(`${panel}/api/application/nodes/${nodeId}/allocations`, { headers })
+    const allocJson = await allocRes.json()
+    const alloc = allocJson.data.find(a => !a.attributes.assigned)
+    if (!alloc) return res.status(404).json({ success: false, error: 'Allocation kosong tidak tersedia' })
+    const allocation = alloc.attributes.id
+
+    // GET NEST
+    const nestRes = await fetch(`${panel}/api/application/nests`, { headers })
+    const nestJson = await nestRes.json()
+    const nest = nestJson.data.find(n => n.attributes.name.toLowerCase() === nestName)
+    if (!nest) return res.status(404).json({ success: false, error: 'Nest tidak ditemukan' })
+    const nestId = nest.attributes.id
+
+    // GET EGG
+    const eggRes = await fetch(`${panel}/api/application/nests/${nestId}/eggs`, { headers })
+    const eggJson = await eggRes.json()
+    const egg = eggJson.data.find(e => e.attributes.name.toLowerCase() === eggName)
+    if (!egg) return res.status(404).json({ success: false, error: 'Egg tidak ditemukan' })
+    const eggId = egg.attributes.id
+    const startup = egg.attributes.startup
+
+    // BUAT USER
+    const userRes = await fetch(`${panel}/api/application/users`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        email: `${user}@gmail.com`,
+        username: user,
+        first_name: `${user} Server`,
+        last_name: 'Bot',
+        language: 'en',
+        password
+      })
+    })
+    const userJson = await userRes.json()
+    if (userJson.errors) {
+      console.error('❌ ERROR BUAT USER:', userJson.errors[0])
+      return res.status(400).json({ success: false, error: userJson.errors[0] })
+    }
+    const userId = userJson.attributes.id
+
+    // BUAT SERVER
+    const srvRes = await fetch(`${panel}/api/application/servers`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        name: `${user} Server`,
+        user: userId,
+        egg: eggId,
+        nest: nestId,
+        startup,
+        docker_image: 'ghcr.io/parkervcp/yolks:nodejs_18',
+        environment: {
+          INST: 'npm',
+          USER_UPLOAD: '0',
+          AUTO_UPDATE: '0',
+          CMD_RUN: 'npm start'
+        },
+        limits: {
+          memory: ramInt,
+          swap: 0,
+          disk: disk,
+          io: 500,
+          cpu: cpuInt
+        },
+        feature_limits: {
+          databases: 2,
+          backups: 2,
+          allocations: 1
+        },
+        deploy: {
+          locations: [nodeId],
+          dedicated_ip: false,
+          port_range: []
+        },
+        allocation
+      })
+    })
+
+    const srvJson = await srvRes.json()
+    if (srvJson.errors) {
+      console.error('❌ ERROR BUAT SERVER:', srvJson.errors[0])
+      return res.status(400).json({ success: false, error: srvJson.errors[0] })
+    }
+
+    // Sukses
+    return res.status(200).json({
+      success: true,
+      username: user,
+      password,
+      ram: ramInt,
+      cpu: cpuInt,
+      disk,
+      panel
+    })
+
+  } catch (e) {
+    console.error('🔥 ERROR SYSTEM:', e)
+    return res.status(500).json({ success: false, error: 'Terjadi error internal', detail: e.message })
+  }
+}
