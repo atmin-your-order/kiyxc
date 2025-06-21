@@ -1,57 +1,103 @@
 // pages/index.js
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 
 const users = [
   ['admin123', 'kiyy'],
   ['testpass', 'tester']
-]
+];
 
 export default function Home() {
-  const [login, setLogin] = useState(false)
-  const [inputLogin, setInputLogin] = useState({ username: '', password: '' })
-  const [form, setForm] = useState({ username: '', ram: '', cpu: '' })
-  const [result, setResult] = useState(null)
-  const [error, setError] = useState('')
-  const [typedResult, setTypedResult] = useState('')
-  const [isTyping, setIsTyping] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [login, setLogin] = useState(false);
+  const [inputLogin, setInputLogin] = useState({ username: '', password: '' });
+  const [form, setForm] = useState({ username: '', ram: '', cpu: '' });
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
+  const [typedResult, setTypedResult] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [loginProgress, setLoginProgress] = useState(0);
+
+  // Animasi loading acak untuk login
+  useEffect(() => {
+    if (loginProgress > 0 && loginProgress < 100) {
+      const timer = setTimeout(() => {
+        const randomIncrement = Math.floor(Math.random() * 15) + 5;
+        setLoginProgress(prev => Math.min(prev + randomIncrement, 100));
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [loginProgress]);
+
+  // Animasi loading untuk deploy
+  useEffect(() => {
+    if (isLoading && progress < 100) {
+      const timer = setTimeout(() => {
+        const randomIncrement = Math.floor(Math.random() * 10) + 1;
+        setProgress(prev => Math.min(prev + randomIncrement, 100));
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, progress]);
 
   const handleLogin = (e) => {
-    e.preventDefault()
-    const found = users.find(([pass, user]) => user === inputLogin.username && pass === inputLogin.password)
-    if (found) {
-      setLogin(true)
-      setError('')
-    } else {
-      setError('Username atau password salah!')
-    }
-  }
+    e.preventDefault();
+    setLoginProgress(0); // Reset progress
+    
+    // Mulai animasi loading
+    const found = users.find(([pass, user]) => user === inputLogin.username && pass === inputLogin.password);
+    
+    const loadingInterval = setInterval(() => {
+      setLoginProgress(prev => {
+        const newProgress = prev + Math.floor(Math.random() * 15) + 5;
+        if (newProgress >= 100) {
+          clearInterval(loadingInterval);
+          setTimeout(() => {
+            if (found) {
+              setLogin(true);
+              setError('');
+            } else {
+              setError('Username atau password salah!');
+            }
+            setLoginProgress(0);
+          }, 500);
+          return 100;
+        }
+        return newProgress;
+      });
+    }, 200);
+  };
 
   const handleDeploy = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setResult(null)
-    setTypedResult('')
-    setIsTyping(false)
+    e.preventDefault();
+    setIsLoading(true);
+    setProgress(0);
+    setResult(null);
+    setTypedResult('');
+    setIsTyping(false);
 
-    const res = await fetch('/api/deploy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form)
-    })
-    const data = await res.json()
-    setResult(data)
-    setTypedResult('')
-    setIsTyping(true)
-  }
+    // Simulasi proses deploy dengan timeout
+    setTimeout(async () => {
+      const res = await fetch('/api/deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      const data = await res.json();
+      setResult(data);
+      setProgress(100);
+      setIsTyping(true);
+      setIsLoading(false);
+    }, 2500); // Delay untuk simulasi loading
+  };
 
   useEffect(() => {
     if (result && isTyping) {
-      const createdAt = new Date()
-      const expireAt = new Date(createdAt)
-      expireAt.setDate(expireAt.getDate() + 30)
+      const createdAt = new Date();
+      const expireAt = new Date(createdAt);
+      expireAt.setDate(expireAt.getDate() + 30);
 
-      const formatDate = (d) => d.toLocaleDateString('id-ID')
+      const formatDate = (d) => d.toLocaleDateString('id-ID');
 
       const output = `🔥 AKUN BERHASIL DIBUAT 🔥
 
@@ -59,8 +105,8 @@ export default function Home() {
 🔐 Password: ${result.password}
 🌐 Host: ${result.panel || 'Tidak tersedia'}
 
-💾 RAM: ${result.ram == 0 ? 'Unlimited' : `${result.ram} MB`}
-⚙️ CPU: ${result.cpu == 0 ? 'Unlimited' : `${result.cpu}%`}
+💾 RAM: ${result.ram === 0 ? 'Unlimited' : `${result.ram} GB`}
+⚙️ CPU: ${result.cpu === 0 ? 'Unlimited' : `${result.cpu} %`}
 📊 Status: Aktif ✅
 📅 Dibuat: ${formatDate(createdAt)}
 ⏳ Aktif 30 Hari
@@ -74,25 +120,48 @@ export default function Home() {
 📌 Jika melanggar, server akan dihapus tanpa pemberitahuan!
 
 👑 Author: IKYY
-`
+`;
 
-      let i = 0
+      let i = 0;
       const typing = setInterval(() => {
-        setTypedResult(output.slice(0, i))
-        i++
+        setTypedResult(output.slice(0, i));
+        i++;
         if (i > output.length) {
-          clearInterval(typing)
-          setIsTyping(false)
-          setIsLoading(false)
+          clearInterval(typing);
+          setIsTyping(false);
         }
-      }, 10)
+      }, 10);
     }
-  }, [result, isTyping])
+  }, [result, isTyping]);
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(typedResult)
-    alert('Berhasil Disalin ✅')
-  }
+    navigator.clipboard.writeText(typedResult);
+    alert('Berhasil Disalin ✅');
+  };
+
+  // Fungsi untuk membuat progress bar visual
+  const renderProgressBar = (percentage) => {
+    const filledBlocks = Math.floor(percentage / 5);
+    const emptyBlocks = 20 - filledBlocks;
+    return (
+      <div style={{ 
+        display: 'flex', 
+        width: '100%',
+        margin: '10px 0',
+        background: 'rgba(0,0,0,0.1)',
+        borderRadius: '10px',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          width: `${percentage}%`,
+          height: '10px',
+          background: 'linear-gradient(90deg, #4b0082, #8a2be2)',
+          transition: 'width 0.3s ease',
+          borderRadius: '10px'
+        }} />
+      </div>
+    );
+  };
 
   return (
     <div style={{
@@ -116,6 +185,8 @@ export default function Home() {
           font-size: 1.1rem;
           border-radius: 10px;
           border: 1px solid #ccc;
+          width: 100%;
+          box-sizing: border-box;
         }
         button {
           padding: 1rem;
@@ -126,6 +197,7 @@ export default function Home() {
           border: none;
           cursor: pointer;
           transition: 0.2s;
+          width: 100%;
         }
         button:hover {
           background-color: #370061;
@@ -134,25 +206,93 @@ export default function Home() {
           background-color: #999;
           cursor: not-allowed;
         }
+        .input-group {
+          display: flex;
+          align-items: center;
+          width: 100%;
+          position: relative;
+        }
+        .unit-label {
+          position: absolute;
+          right: 10px;
+          color: #666;
+        }
+        .progress-text {
+          text-align: center;
+          margin-top: 5px;
+          font-size: 0.9rem;
+          color: #4b0082;
+          font-weight: bold;
+        }
       `}</style>
 
       <h1 style={{ color: '#4b0082', marginBottom: '2rem', fontSize: '2rem' }}>🚀 Deploy Panel Bot</h1>
 
       {!login ? (
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
-          <input placeholder="Username" required onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })} />
-          <input placeholder="Password" type="password" required onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })} />
-          <button>Login</button>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
+          <input 
+            placeholder="Username" 
+            required 
+            onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })} 
+          />
+          <input 
+            placeholder="Password" 
+            type="password" 
+            required 
+            onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })} 
+          />
+          <button>
+            {loginProgress > 0 ? `Loading ${loginProgress}%` : 'Login'}
+          </button>
+          {loginProgress > 0 && renderProgressBar(loginProgress)}
+          {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
         </form>
       ) : (
         <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
-          <input placeholder="Username" required onChange={e => setForm({ ...form, username: e.target.value })} />
-          <input placeholder="RAM (0 = Unlimited)" type="number" required onChange={e => setForm({ ...form, ram: e.target.value })} />
-          <input placeholder="CPU (0 = Unlimited)" type="number" required onChange={e => setForm({ ...form, cpu: e.target.value })} />
+          <input 
+            placeholder="Username" 
+            required 
+            onChange={e => setForm({ ...form, username: e.target.value })}
+            disabled={isLoading}
+          />
+          
+          <div className="input-group">
+            <input 
+              placeholder="RAM (0 = Unlimited)" 
+              type="number" 
+              required 
+              onChange={e => setForm({ ...form, ram: e.target.value })}
+              disabled={isLoading}
+            />
+            <span className="unit-label">GB</span>
+          </div>
+          
+          <div className="input-group">
+            <input 
+              placeholder="CPU (0 = Unlimited)" 
+              type="number" 
+              required 
+              onChange={e => setForm({ ...form, cpu: e.target.value })}
+              disabled={isLoading}
+            />
+            <span className="unit-label">%</span>
+          </div>
+          
           <button disabled={isLoading}>
-            {isLoading ? 'Akun Anda sedang dibuat...' : 'Deploy'}
+            {isLoading ? `Creating Panel... ${progress}%` : 'Deploy'}
           </button>
+          
+          {isLoading && (
+            <>
+              {renderProgressBar(progress)}
+              <div className="progress-text">
+                {progress < 30 && 'Menginisialisasi server...'}
+                {progress >= 30 && progress < 70 && 'Mengalokasikan sumber daya...'}
+                {progress >= 70 && progress < 100 && 'Menyelesaikan konfigurasi...'}
+                {progress === 100 && 'Selesai!'}
+              </div>
+            </>
+          )}
         </form>
       )}
 
@@ -191,5 +331,5 @@ export default function Home() {
         </div>
       )}
     </div>
-  )
+  );
 }
