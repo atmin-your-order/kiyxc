@@ -27,7 +27,7 @@ export default function Home() {
 
   // Animasi loading acak untuk login
   useEffect(() => {
-    if (loginProgress > 0 && loginProgress  100) {
+    if (loginProgress > 0 && loginProgress < 100) { // Perbaikan di sini
       const timer = setTimeout(() => {
         const randomIncrement = Math.floor(Math.random() * 15) + 5;
         setLoginProgress(prev => Math.min(prev + randomIncrement, 100));
@@ -38,7 +38,7 @@ export default function Home() {
 
   // Animasi loading untuk deploy
   useEffect(() => {
-    if (isLoading && progress  100) {
+    if (isLoading && progress < 100) {
       const timer = setTimeout(() => {
         const randomIncrement = Math.floor(Math.random() * 10) + 1;
         setProgress(prev => Math.min(prev + randomIncrement, 100));
@@ -146,7 +146,7 @@ export default function Home() {
 
   const renderProgressBar = (percentage) => {
     return (
-      div style={{ 
+      <div style={{ 
         display: 'flex', 
         width: '100%',
         margin: '10px 0',
@@ -154,19 +154,19 @@ export default function Home() {
         borderRadius: '10px',
         overflow: 'hidden'
       }}>
-        div style={{
+        <div style={{
           width: `${percentage}%`,
           height: '10px',
           background: 'linear-gradient(90deg, #4b0082, #8a2be2)',
           transition: 'width 0.3s ease',
           borderRadius: '10px'
         }} />
-      /div>
+      </div>
     );
   };
 
   return (
-    div style={{
+    <div style={{
       background: 'linear-gradient(135deg, #e0c3fc, #8ec5fc)',
       minHeight: '100vh',
       display: 'flex',
@@ -177,7 +177,7 @@ export default function Home() {
       padding: '2rem',
       animation: 'slideIn 0.6s ease'
     }}>
-      style jsx>{`
+      <style jsx>{`
         @keyframes slideIn {
           from { opacity: 0; transform: translateX(-20px); }
           to { opacity: 1; transform: translateX(0); }
@@ -243,34 +243,34 @@ export default function Home() {
         .copy-btn:hover {
           background-color: #370061;
         }
-      `}/style>
+      `}</style>
 
-      h1 style={{ color: '#4b0082', marginBottom: '2rem', fontSize: '2rem' }}>🚀 Deploy Panel Bot/h1>
+      <h1 style={{ color: '#4b0082', marginBottom: '2rem', fontSize: '2rem' }}>🚀 Deploy Panel Bot</h1>
 
       {!login ? (
-        form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
-          input 
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
+          <input 
             placeholder="Username" 
             required 
             value={inputLogin.username}
             onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })} 
           />
-          input 
+          <input 
             placeholder="Password" 
             type="password" 
             required 
             value={inputLogin.password}
             onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })} 
           />
-          button>
+          <button>
             {loginProgress > 0 ? `Loading ${loginProgress}%` : 'Login'}
-          /button>
+          </button>
           {loginProgress > 0 && renderProgressBar(loginProgress)}
-          {error && p style={{ color: 'red', textAlign: 'center' }}>{error}/p>}
-        /form>
+          {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
+        </form>
       ) : (
-        form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
-          input 
+        <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '450px' }}>
+          <input 
             placeholder="Username" 
             required 
             value={form.username}
@@ -278,8 +278,8 @@ export default function Home() {
             disabled={isLoading}
           />
           
-          div className="input-group">
-            input 
+          <div className="input-group">
+            <input 
               placeholder="RAM (0 = Unlimited)" 
               type="number" 
               required 
@@ -287,11 +287,11 @@ export default function Home() {
               onChange={e => setForm({ ...form, ram: e.target.value })}
               disabled={isLoading}
             />
-            span className="unit-label">GB/span>
-          /div>
+            <span className="unit-label">GB</span>
+          </div>
           
-          div className="input-group">
-            input 
+          <div className="input-group">
+            <input 
               placeholder="CPU (0 = Unlimited)" 
               type="number" 
               required 
@@ -299,29 +299,29 @@ export default function Home() {
               onChange={e => setForm({ ...form, cpu: e.target.value })}
               disabled={isLoading}
             />
-            span className="unit-label">%/span>
-          /div>
+            <span className="unit-label">%</span>
+          </div>
           
-          button disabled={isLoading}>
+          <button disabled={isLoading}>
             {isLoading ? `Creating Panel... ${progress}%` : 'Deploy'}
-          /button>
+          </button>
           
           {isLoading && (
-            >
+            <>
               {renderProgressBar(progress)}
-              div className="progress-text">
-                {progress  30 && 'Menginisialisasi server...'}
-                {progress >= 30 && progress  70 && 'Mengalokasikan sumber daya...'}
-                {progress >= 70 && progress  100 && 'Menyelesaikan konfigurasi...'}
+              <div className="progress-text">
+                {progress < 30 && 'Menginisialisasi server...'}
+                {progress >= 30 && progress < 70 && 'Mengalokasikan sumber daya...'}
+                {progress >= 70 && progress < 100 && 'Menyelesaikan konfigurasi...'}
                 {progress === 100 && 'Selesai!'}
-              /div>
-            />
+              </div>
+            </>
           )}
-        /form>
+        </form>
       )}
 
       {typedResult && (
-        div style={{
+        <div style={{
           marginTop: '2rem',
           background: 'white',
           borderRadius: '16px',
@@ -338,13 +338,13 @@ export default function Home() {
           flexDirection: 'column'
         }}>
           {typedResult}
-          button
+          <button
             onClick={copyToClipboard}
             className="copy-btn">
             📋 Salin Hasil
-          /button>
-        /div>
+          </button>
+        </div>
       )}
-    /div>
+    </div>
   );
 }
