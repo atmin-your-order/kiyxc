@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   try {
     const nodeRes = await fetch(`${panel}/api/application/nodes`, { headers })
     const nodeJson = await nodeRes.json()
-    const node = nodeJson.data.find(n => n.attributes.name.toLowerCase() === 'node by atraxz')
+    const node = nodeJson.data.find(n => n.attributes.name.toLowerCase() === 'nodes')
     if (!node) return res.status(404).json({ error: 'Node tidak ditemukan' })
     const nodeId = node.attributes.id
 
