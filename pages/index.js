@@ -26,7 +26,7 @@ export default function Home() {
 
   // Login progress animation
   useEffect(() => {
-    if (loginProgress > 0 && loginProgress  100) {
+    if (loginProgress > 0 && loginProgress < 100) {
       const timer = setTimeout(() => {
         const randomIncrement = Math.floor(Math.random() * 15) + 5;
         setLoginProgress(prev => Math.min(prev + randomIncrement, 100));
