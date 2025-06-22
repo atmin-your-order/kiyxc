@@ -1,5 +1,4 @@
 import crypto from 'crypto'
-import config from './config.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -7,7 +6,8 @@ export default async function handler(req, res) {
   const { username, ram, cpu } = req.body
   if (!username || !ram || !cpu) return res.status(400).json({ error: 'Semua field wajib diisi' })
 
-  const { panelURL, apiKey, nodeName, nestName, eggName, dockerImage } = config
+  const panel = 'https://kenjapublic.digital-market.web.id'
+  const apiKey = 'ptla_WNQY5xBLAYF40mm1YuvPT2npMpsT8xcftCMdt3FXVKt'
   const password = crypto.randomBytes(3).toString('hex')
   const ramInt = parseInt(ram)
   const cpuInt = parseInt(cpu)
@@ -21,32 +21,32 @@ export default async function handler(req, res) {
   }
 
   try {
-    const nodeRes = await fetch(`${panelURL}/api/application/nodes`, { headers })
+    const nodeRes = await fetch(`${panel}/api/application/nodes`, { headers })
     const nodeJson = await nodeRes.json()
-    const node = nodeJson.data.find(n => n.attributes.name.toLowerCase() === nodeName.toLowerCase())
+    const node = nodeJson.data.find(n => n.attributes.name.toLowerCase() === 'node by atraxz')
     if (!node) return res.status(404).json({ error: 'Node tidak ditemukan' })
     const nodeId = node.attributes.id
 
-    const allocRes = await fetch(`${panelURL}/api/application/nodes/${nodeId}/allocations`, { headers })
+    const allocRes = await fetch(`${panel}/api/application/nodes/${nodeId}/allocations`, { headers })
     const allocJson = await allocRes.json()
     const alloc = allocJson.data.find(a => !a.attributes.assigned)
     if (!alloc) return res.status(404).json({ error: 'Allocation kosong tidak tersedia' })
     const allocation = alloc.attributes.id
 
-    const nestRes = await fetch(`${panelURL}/api/application/nests`, { headers })
+    const nestRes = await fetch(`${panel}/api/application/nests`, { headers })
     const nestJson = await nestRes.json()
-    const nest = nestJson.data.find(n => n.attributes.name.toLowerCase() === nestName.toLowerCase())
+    const nest = nestJson.data.find(n => n.attributes.name.toLowerCase() === 'bot whatsapp')
     if (!nest) return res.status(404).json({ error: 'Nest tidak ditemukan' })
     const nestId = nest.attributes.id
 
-    const eggRes = await fetch(`${panelURL}/api/application/nests/${nestId}/eggs`, { headers })
+    const eggRes = await fetch(`${panel}/api/application/nests/${nestId}/eggs`, { headers })
     const eggJson = await eggRes.json()
-    const egg = eggJson.data.find(e => e.attributes.name.toLowerCase() === eggName.toLowerCase())
+    const egg = eggJson.data.find(e => e.attributes.name.toLowerCase() === 'naofumi')
     if (!egg) return res.status(404).json({ error: 'Egg tidak ditemukan' })
     const eggId = egg.attributes.id
     const startup = egg.attributes.startup
 
-    const userRes = await fetch(`${panelURL}/api/application/users`, {
+    const userRes = await fetch(`${panel}/api/application/users`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -63,7 +63,7 @@ export default async function handler(req, res) {
     if (userJson.errors) return res.status(400).json({ error: userJson.errors[0] })
     const userId = userJson.attributes.id
 
-    const srvRes = await fetch(`${panelURL}/api/application/servers`, {
+    const srvRes = await fetch(`${panel}/api/application/servers`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -72,7 +72,7 @@ export default async function handler(req, res) {
         egg: eggId,
         nest: nestId,
         startup,
-        docker_image: dockerImage,
+        docker_image: 'ghcr.io/parkervcp/yolks:nodejs_18',
         environment: {
           INST: 'npm',
           USER_UPLOAD: '0',
@@ -110,7 +110,7 @@ export default async function handler(req, res) {
       ram: `${ramInt} MB`,
       cpu: `${cpuInt}%`,
       disk: `${disk} MB`,
-      panel: panelURL
+      panel
     })
 
   } catch (e) {
