@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 
 const users = [
   ['fullpower', 'kiyy'],
-  ['powerofzietra', 'zietra']
+  ['powerofzietra', 'zietra'],
+  ['amane01', 'amane']
 ];
 
 export default function Home() {
