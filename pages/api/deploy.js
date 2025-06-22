@@ -1,81 +1,78 @@
-import crypto from 'crypto';
-import { CONFIG } from './config';
+import crypto from 'crypto'
+import config from './config.js'
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { username, ram, cpu } = req.body;
-  if (!username || !ram || !cpu) {
-    return res.status(400).json({ error: 'Semua field wajib diisi' });
+  const { username, ram, cpu } = req.body
+  if (!username || !ram || !cpu) return res.status(400).json({ error: 'Semua field wajib diisi' })
+
+  const { panelURL, apiKey, nodeName, nestName, eggName, dockerImage } = config
+  const password = crypto.randomBytes(3).toString('hex')
+  const ramInt = parseInt(ram)
+  const cpuInt = parseInt(cpu)
+  const disk = ramInt
+  const user = username.toLowerCase()
+
+  const headers = {
+    'Authorization': `Bearer ${apiKey}`,
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
   }
 
   try {
-    const password = crypto.randomBytes(3).toString('hex');
-    const ramInt = parseInt(ram);
-    const cpuInt = parseInt(cpu);
-    const disk = ramInt;
-    const user = username.toLowerCase();
+    const nodeRes = await fetch(`${panelURL}/api/application/nodes`, { headers })
+    const nodeJson = await nodeRes.json()
+    const node = nodeJson.data.find(n => n.attributes.name.toLowerCase() === nodeName.toLowerCase())
+    if (!node) return res.status(404).json({ error: 'Node tidak ditemukan' })
+    const nodeId = node.attributes.id
 
-    const headers = {
-      Authorization: `Bearer ${CONFIG.apiKey}`,
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    };
+    const allocRes = await fetch(`${panelURL}/api/application/nodes/${nodeId}/allocations`, { headers })
+    const allocJson = await allocRes.json()
+    const alloc = allocJson.data.find(a => !a.attributes.assigned)
+    if (!alloc) return res.status(404).json({ error: 'Allocation kosong tidak tersedia' })
+    const allocation = alloc.attributes.id
 
-    // 1. Cari Node
-    const nodeRes = await fetch(`${CONFIG.panel}/api/application/nodes`, { headers });
-    const node = (await nodeRes.json()).data.find(n =>
-      n.attributes.name.toLowerCase() === CONFIG.nodeName.toLowerCase()
-    );
-    if (!node) return res.status(404).json({ error: 'Node tidak ditemukan' });
+    const nestRes = await fetch(`${panelURL}/api/application/nests`, { headers })
+    const nestJson = await nestRes.json()
+    const nest = nestJson.data.find(n => n.attributes.name.toLowerCase() === nestName.toLowerCase())
+    if (!nest) return res.status(404).json({ error: 'Nest tidak ditemukan' })
+    const nestId = nest.attributes.id
 
-    // 2. Cari Allocation Kosong
-    const allocRes = await fetch(`${CONFIG.panel}/api/application/nodes/${node.attributes.id}/allocations`, { headers });
-    const allocations = (await allocRes.json()).data.filter(a => !a.attributes.assigned);
-    if (!allocations.length) return res.status(404).json({ error: 'Tidak ada port kosong di node ini.' });
-    const alloc = allocations[0]; // ambil pertama
+    const eggRes = await fetch(`${panelURL}/api/application/nests/${nestId}/eggs`, { headers })
+    const eggJson = await eggRes.json()
+    const egg = eggJson.data.find(e => e.attributes.name.toLowerCase() === eggName.toLowerCase())
+    if (!egg) return res.status(404).json({ error: 'Egg tidak ditemukan' })
+    const eggId = egg.attributes.id
+    const startup = egg.attributes.startup
 
-    // 3. Cari Nest
-    const nestRes = await fetch(`${CONFIG.panel}/api/application/nests`, { headers });
-    const nest = (await nestRes.json()).data.find(n =>
-      n.attributes.name.toLowerCase() === CONFIG.nestName.toLowerCase()
-    );
-    if (!nest) return res.status(404).json({ error: 'Nest tidak ditemukan' });
-
-    // 4. Cari Egg
-    const eggRes = await fetch(`${CONFIG.panel}/api/application/nests/${nest.attributes.id}/eggs`, { headers });
-    const egg = (await eggRes.json()).data.find(e =>
-      e.attributes.name.toLowerCase() === CONFIG.eggName.toLowerCase()
-    );
-    if (!egg) return res.status(404).json({ error: 'Egg tidak ditemukan' });
-
-    // 5. Buat User
-    const userRes = await fetch(`${CONFIG.panel}/api/application/users`, {
+    const userRes = await fetch(`${panelURL}/api/application/users`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        email: `${user}${CONFIG.defaultEmailDomain}`,
+        email: `${user}@gmail.com`,
         username: user,
         first_name: `${user} Server`,
         last_name: 'Bot',
         language: 'en',
         password
       })
-    });
-    const userData = await userRes.json();
-    if (userData.errors) return res.status(400).json({ error: userData.errors[0] });
+    })
 
-    // 6. Buat Server
-    const srvRes = await fetch(`${CONFIG.panel}/api/application/servers`, {
+    const userJson = await userRes.json()
+    if (userJson.errors) return res.status(400).json({ error: userJson.errors[0] })
+    const userId = userJson.attributes.id
+
+    const srvRes = await fetch(`${panelURL}/api/application/servers`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
         name: `${user} Server`,
-        user: userData.attributes.id,
-        egg: egg.attributes.id,
-        nest: nest.attributes.id,
-        startup: egg.attributes.startup,
-        docker_image: CONFIG.defaultDockerImage,
+        user: userId,
+        egg: eggId,
+        nest: nestId,
+        startup,
+        docker_image: dockerImage,
         environment: {
           INST: 'npm',
           USER_UPLOAD: '0',
@@ -85,48 +82,38 @@ export default async function handler(req, res) {
         limits: {
           memory: ramInt,
           swap: 0,
-          disk,
-          io: CONFIG.defaultLimits.io,
+          disk: disk,
+          io: 500,
           cpu: cpuInt
         },
         feature_limits: {
-          databases: CONFIG.defaultLimits.databases,
-          backups: CONFIG.defaultLimits.backups,
-          allocations: CONFIG.defaultLimits.allocations
+          databases: 2,
+          backups: 2,
+          allocations: 1
         },
         deploy: {
-          locations: [node.attributes.id],
+          locations: [nodeId],
           dedicated_ip: false,
           port_range: []
         },
-        allocation: alloc.attributes.id
+        allocation
       })
-    });
+    })
 
-    const serverData = await srvRes.json();
-    if (serverData.errors) return res.status(400).json({ error: serverData.errors[0] });
+    const srvJson = await srvRes.json()
+    if (srvJson.errors) return res.status(400).json({ error: srvJson.errors[0] })
 
-    // 7. Sukses
     res.status(200).json({
       success: true,
       username: user,
       password,
-      resources: {
-        ram: `${ramInt} MB`,
-        cpu: `${cpuInt}%`,
-        disk: `${disk} MB`
-      },
-      panel: CONFIG.panel,
-      serverId: serverData.attributes.id,
-      node: node.attributes.name,
-      allocation: `${alloc.attributes.ip}:${alloc.attributes.port}`
-    });
+      ram: `${ramInt} MB`,
+      cpu: `${cpuInt}%`,
+      disk: `${disk} MB`,
+      panel: panelURL
+    })
 
   } catch (e) {
-    console.error('Error:', e);
-    res.status(500).json({
-      error: 'Terjadi kesalahan sistem',
-      detail: process.env.NODE_ENV === 'development' ? e.message : undefined
-    });
+    res.status(500).json({ error: 'Terjadi error', detail: e.message })
   }
-        }
+}
