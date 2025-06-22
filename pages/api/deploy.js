@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     // Mendapatkan nest
     const nestRes = await fetch(`${panelURL}/api/application/nests`, { headers });
     const nestJson = await nestRes.json();
-    const nest = nestJson.data.find(n => n.attributes.name.toLowerCase() === 'untuk bot whatsapp');
+    const nest = nestJson.data.find(n => n.attributes.name.toLowerCase() === 'untuk bot wa');
     if (!nest) return res.status(404).json({ error: 'Nest tidak ditemukan' });
     const nestId = nest.attributes.id;
 
