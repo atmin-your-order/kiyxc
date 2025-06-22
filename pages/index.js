@@ -1,116 +1,477 @@
-import { useState, useEffect } from 'react';
-
-const users = [
-  ['admin123', 'kiyy'],
-  ['testpass', 'tester']
-];
-
-export default function Home() {
-  const [login, setLogin] = useState(false);
-  const [inputLogin, setInputLogin] = useState({ username: '', password: '' });
-  const [form, setForm] = useState({ username: '', ram: '', cpu: '' });
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState('');
-  const [typedResult, setTypedResult] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [loginProgress, setLoginProgress] = useState(0);
-
-  // Reset form saat login berhasil
-  useEffect(() => {
-    if (login) {
-      setInputLogin({ username: '', password: '' });
-    }
-  }, [login]);
-
-  // Animasi loading acak untuk login
-  useEffect(() => {
-    if (loginProgress > 0 && loginProgress < 100) { // Perbaikan di sini
-      const timer = setTimeout(() => {
-        const randomIncrement = Math.floor(Math.random() * 15) + 5;
-        setLoginProgress(prev => Math.min(prev + randomIncrement, 100));
-      }, 200);
-      return () => clearTimeout(timer);
-    }
-  }, [loginProgress]);
-
-  // Animasi loading untuk deploy
-  useEffect(() => {
-    if (isLoading && progress < 100) { // Perbaikan di sini
-      const timer = setTimeout(() => {
-        const randomIncrement = Math.floor(Math.random() * 10) + 1;
-        setProgress(prev => Math.min(prev + randomIncrement, 100));
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, progress]);
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    setLoginProgress(0);
-    
-    const found = users.find(([pass, user]) => user === inputLogin.username && pass === inputLogin.password);
-    
-    const loadingInterval = setInterval(() => {
-      setLoginProgress(prev => {
-        const newProgress = prev + Math.floor(Math.random() * 15) + 5;
-        if (newProgress >= 100) {
-          clearInterval(loadingInterval);
-          setTimeout(() => {
-            if (found) {
-              setLogin(true);
-              setError('');
-            } else {
-              setError('Username atau password salah!');
-            }
-            setLoginProgress(0);
-          }, 500);
-          return 100;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IKYY Deployment Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
         }
-        return newProgress;
-      });
-    }, 200);
-  };
 
-  const handleDeploy = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setProgress(0);
-    setResult(null);
-    setTypedResult('');
-    setIsTyping(false);
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0c29, #302b63);
+            color: white;
+            overflow-x: hidden;
+        }
 
-    setTimeout(async () => {
-      const res = await fetch('/api/deploy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
-      });
-      const data = await res.json();
-      setResult(data);
-      setProgress(100);
-      setIsTyping(true);
-      setIsLoading(false);
-    }, 2500);
-  };
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
 
-  useEffect(() => {
-    if (result && isTyping) {
-      const createdAt = new Date();
-      const expireAt = new Date(createdAt);
-      expireAt.setDate(expireAt.getDate() + 30);
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
 
-      const formatDate = (d) => d.toLocaleDateString('id-ID');
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease;
+        }
 
-      const output = `🔥 AKUN BERHASIL DIBUAT 🔥
+        .glass-card:hover {
+            transform: translateY(-5px);
+        }
 
-👤 Username: ${result.username}
-🔐 Password: ${result.password}
-🌐 Host: ${result.panel || 'Tidak tersedia'}
+        h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 2.2rem;
+            background: linear-gradient(90deg, #72ffb6, #10d3ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
 
-💾 RAM: ${result.ram === 0 ? 'Unlimited' : `${result.ram} GB`}
-⚙️ CPU: ${result.cpu === 0 ? 'Unlimited' : `${result.cpu} %`}
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: rgba(114, 255, 182, 0.5);
+            box-shadow: 0 0 0 3px rgba(114, 255, 182, 0.2);
+        }
+
+        .input-with-unit {
+            position: relative;
+        }
+
+        .unit {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(90deg, #72ffb6, #10d3ff);
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(114, 255, 182, 0.4);
+        }
+
+        button:disabled {
+            background: #ccc;
+            transform: none;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .progress-container {
+            width: 100%;
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            height: 8px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #72ffb6, #10d3ff);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .result-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            white-space: pre-wrap;
+            font-family: monospace;
+            border: 1px solid rgba(114, 255, 182, 0.2);
+        }
+
+        .copy-btn {
+            margin-top: 1rem;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particle-canvas"></canvas>
+    
+    <div class="container">
+        <div class="glass-card">
+            <h1>IKYY Deployment Panel</h1>
+            
+            <div id="form-content">
+                <!-- Form will be rendered here -->
+            </div>
+            
+            <div id="result-container" style="display: none;">
+                <div class="result-box" id="result-box"></div>
+                <button class="copy-btn" id="copy-btn">📋 Copy Result</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Particle Background
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        for (let i = 0; i < 80; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 3 + 1,
+                speedX: Math.random() * 2 - 1,
+                speedY: Math.random() * 2 - 1,
+                color: `rgba(114, 255, 182, ${Math.random() * 0.3 + 0.1})`
+            });
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach(p => {
+                p.x += p.speedX;
+                p.y += p.speedY;
+                
+                if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
+                
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // App Logic
+        const users = [
+            ['admin123', 'kiyy'],
+            ['testpass', 'tester']
+        ];
+
+        let login = false;
+        let inputLogin = { username: '', password: '' };
+        let form = { username: '', ram: '', cpu: '' };
+        let result = null;
+        let error = '';
+        let typedResult = '';
+        let isTyping = false;
+        let isLoading = false;
+        let progress = 0;
+        let loginProgress = 0;
+
+        const formContent = document.getElementById('form-content');
+        const resultContainer = document.getElementById('result-container');
+        const resultBox = document.getElementById('result-box');
+        const copyBtn = document.getElementById('copy-btn');
+
+        function renderLoginForm() {
+            formContent.innerHTML = `
+                <form id="login-form">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input 
+                            type="text" 
+                            value="${inputLogin.username}"
+                            placeholder="Enter username"
+                            required
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input 
+                            type="password" 
+                            value="${inputLogin.password}"
+                            placeholder="Enter password"
+                            required
+                        >
+                    </div>
+                    ${error ? `<p style="color: #ff6b6b; margin-bottom: 1rem;">${error}</p>` : ''}
+                    <button type="submit" ${loginProgress > 0 ? 'disabled' : ''}>
+                        ${loginProgress > 0 ? `Loading... ${loginProgress}%` : 'Login'}
+                    </button>
+                    ${loginProgress > 0 ? `
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${loginProgress}%"></div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </form>
+            `;
+
+            const form = document.getElementById('login-form');
+            const inputs = form.querySelectorAll('input');
+            
+            inputs[0].addEventListener('input', (e) => {
+                inputLogin.username = e.target.value;
+            });
+            
+            inputs[1].addEventListener('input', (e) => {
+                inputLogin.password = e.target.value;
+            });
+            
+            form.addEventListener('submit', handleLogin);
+        }
+
+        function renderDeployForm() {
+            formContent.innerHTML = `
+                <form id="deploy-form">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input 
+                            type="text" 
+                            value="${form.username}"
+                            placeholder="Enter username"
+                            ${isLoading ? 'disabled' : ''}
+                            required
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label>RAM Allocation</label>
+                        <div class="input-with-unit">
+                            <input 
+                                type="number" 
+                                value="${form.ram}"
+                                placeholder="0 for unlimited"
+                                ${isLoading ? 'disabled' : ''}
+                                required
+                            >
+                            <span class="unit">GB</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>CPU Allocation</label>
+                        <div class="input-with-unit">
+                            <input 
+                                type="number" 
+                                value="${form.cpu}"
+                                placeholder="0 for unlimited"
+                                ${isLoading ? 'disabled' : ''}
+                                required
+                            >
+                            <span class="unit">%</span>
+                        </div>
+                    </div>
+                    <button type="submit" ${isLoading ? 'disabled' : ''}>
+                        ${isLoading ? `Deploying... ${progress}%` : 'Deploy Server'}
+                    </button>
+                    ${isLoading ? `
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progress}%"></div>
+                            </div>
+                            <div class="progress-text">
+                                ${progress < 30 ? 'Initializing server...' : 
+                                  progress < 70 ? 'Allocating resources...' : 
+                                  progress < 100 ? 'Finalizing configuration...' : 
+                                  'Done!'}
+                            </div>
+                        </div>
+                    ` : ''}
+                </form>
+            `;
+
+            const form = document.getElementById('deploy-form');
+            const inputs = form.querySelectorAll('input');
+            
+            inputs[0].addEventListener('input', (e) => {
+                form.username = e.target.value;
+            });
+            
+            inputs[1].addEventListener('input', (e) => {
+                form.ram = e.target.value;
+            });
+            
+            inputs[2].addEventListener('input', (e) => {
+                form.cpu = e.target.value;
+            });
+            
+            form.addEventListener('submit', handleDeploy);
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            setLoginProgress(0);
+            
+            const found = users.find(([pass, user]) => 
+                user === inputLogin.username && pass === inputLogin.password
+            );
+            
+            const interval = setInterval(() => {
+                setLoginProgress(prev => {
+                    const newVal = prev + Math.floor(Math.random() * 15) + 5;
+                    if (newVal >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            if (found) {
+                                login = true;
+                                error = '';
+                                renderDeployForm();
+                            } else {
+                                error = 'Invalid username or password!';
+                                renderLoginForm();
+                            }
+                            setLoginProgress(0);
+                        }, 500);
+                        return 100;
+                    }
+                    return newVal;
+                });
+            }, 200);
+        }
+
+        async function handleDeploy(e) {
+            e.preventDefault();
+            isLoading = true;
+            progress = 0;
+            result = null;
+            typedResult = '';
+            isTyping = false;
+            resultContainer.style.display = 'none';
+            renderDeployForm();
+
+            // Progress animation
+            const progressInterval = setInterval(() => {
+                setProgress(prev => {
+                    const newVal = prev + Math.floor(Math.random() * 10) + 1;
+                    if (newVal >= 100) {
+                        clearInterval(progressInterval);
+                        return 100;
+                    }
+                    return newVal;
+                });
+            }, 300);
+
+            try {
+                // Your original POST logic
+                const res = await fetch('/api/deploy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(form)
+                });
+                
+                const data = await res.json();
+                setResult(data);
+                showResult(data);
+            } catch (err) {
+                console.error('Deployment failed:', err);
+                error = 'Deployment failed. Please try again.';
+            } finally {
+                isLoading = false;
+                progress = 100;
+                renderDeployForm();
+            }
+        }
+
+        function showResult(data) {
+            resultContainer.style.display = 'block';
+            
+            const createdAt = new Date();
+            const expireAt = new Date(createdAt);
+            expireAt.setDate(expireAt.getDate() + 30);
+
+            const formatDate = (d) => d.toLocaleDateString('id-ID');
+
+            const output = `🔥 AKUN BERHASIL DIBUAT 🔥
+
+👤 Username: ${data.username}
+🔐 Password: ${data.password}
+🌐 Host: ${data.panel || 'Tidak tersedia'}
+
+💾 RAM: ${data.ram === 0 ? 'Unlimited' : `${data.ram} GB`}
+⚙️ CPU: ${data.cpu === 0 ? 'Unlimited' : `${data.cpu} %`}
 📊 Status: Aktif ✅
 📅 Dibuat: ${formatDate(createdAt)}
 ⏳ Aktif 30 Hari
@@ -126,272 +487,43 @@ export default function Home() {
 👑 Author: IKYY
 `;
 
-      let i = 0;
-      const typing = setInterval(() => {
-        setTypedResult(output.slice(0, i));
-        i++;
-        if (i > output.length) {
-          clearInterval(typing);
-          setIsTyping(false);
+            let i = 0;
+            const typingInterval = setInterval(() => {
+                typedResult = output.slice(0, i);
+                resultBox.textContent = typedResult;
+                i++;
+                if (i > output.length) {
+                    clearInterval(typingInterval);
+                    isTyping = false;
+                }
+            }, 10);
         }
-      }, 10);
-    }
-  }, [result, isTyping]);
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(typedResult);
-    alert('Berhasil Disalin ✅');
-  };
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(typedResult);
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '✓ Copied!';
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+            }, 2000);
+        });
 
-  const renderProgressBar = (percentage) => {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        width: '100%',
-        margin: '10px 0',
-        background: 'rgba(0,0,0,0.1)',
-        borderRadius: '10px',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          width: `${percentage}%`,
-          height: '10px',
-          background: 'linear-gradient(90deg, #4b0082, #8a2be2)',
-          transition: 'width 0.3s ease',
-          borderRadius: '10px'
-        }} />
-      </div>
-    );
-  };
+        function setLoginProgress(val) {
+            loginProgress = val;
+            if (!login) renderLoginForm();
+        }
 
-  return (
-    <div style={{
-      background: 'linear-gradient(135deg, #e0c3fc, #8ec5fc)',
-      minHeight: '100vh',
-      margin: 0,
-      padding: '2rem',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontFamily: 'Segoe UI, sans-serif',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      overflow: 'auto'
-    }}>
-      <style jsx global>{`
-        html, body {
-          margin: 0;
-          padding: 0;
-          width: 100%;
-          height: 100%;
+        function setProgress(val) {
+            progress = val;
+            if (login) renderDeployForm();
         }
-        
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateX(-20px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-        
-        input, select {
-          padding: 1rem;
-          font-size: 1.1rem;
-          border-radius: 10px;
-          border: 1px solid #ccc;
-          width: 100%;
-          box-sizing: border-box;
-        }
-        
-        button {
-          padding: 1rem;
-          font-size: 1.1rem;
-          background-color: #4b0082;
-          color: white;
-          border-radius: 10px;
-          border: none;
-          cursor: pointer;
-          transition: 0.2s;
-          width: 100%;
-        }
-        
-        button:hover {
-          background-color: #370061;
-        }
-        
-        button:disabled {
-          background-color: #999;
-          cursor: not-allowed;
-        }
-        
-        .input-group {
-          display: flex;
-          align-items: center;
-          width: 100%;
-          position: relative;
-        }
-        
-        .unit-label {
-          position: absolute;
-          right: 10px;
-          color: #666;
-        }
-        
-        .progress-text {
-          text-align: center;
-          margin-top: 5px;
-          font-size: 0.9rem;
-          color: #4b0082;
-          font-weight: bold;
-        }
-        
-        .copy-btn {
-          margin-top: 15px;
-          padding: 0.8rem;
-          font-size: 1rem;
-          background-color: #4b0082;
-          color: white;
-          border-radius: 8px;
-          border: none;
-          cursor: pointer;
-          transition: 0.2s;
-          width: 100%;
-          max-width: 200px;
-          align-self: center;
-        }
-        
-        .copy-btn:hover {
-          background-color: #370061;
-        }
-      `}</style>
 
-      <div style={{
-        width: '100%',
-        maxWidth: '600px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center'
-      }}>
-        <h1 style={{ 
-          color: '#4b0082', 
-          marginBottom: '2rem', 
-          fontSize: '2rem',
-          textAlign: 'center'
-        }}>
-          🚀 Deploy Panel Bot
-        </h1>
+        function setResult(data) {
+            result = data;
+        }
 
-        {!login ? (
-          <form onSubmit={handleLogin} style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: '1rem', 
-            width: '100%',
-            maxWidth: '450px'
-          }}>
-            <input 
-              placeholder="Username" 
-              required 
-              value={inputLogin.username}
-              onChange={e => setInputLogin({ ...inputLogin, username: e.target.value })} 
-            />
-            <input 
-              placeholder="Password" 
-              type="password" 
-              required 
-              value={inputLogin.password}
-              onChange={e => setInputLogin({ ...inputLogin, password: e.target.value })} 
-            />
-            <button>
-              {loginProgress > 0 ? `Loading ${loginProgress}%` : 'Login'}
-            </button>
-            {loginProgress > 0 && renderProgressBar(loginProgress)}
-            {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
-          </form>
-        ) : (
-          <form onSubmit={handleDeploy} style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: '1rem', 
-            width: '100%',
-            maxWidth: '450px'
-          }}>
-            <input 
-              placeholder="Username" 
-              required 
-              value={form.username}
-              onChange={e => setForm({ ...form, username: e.target.value })}
-              disabled={isLoading}
-            />
-            
-            <div className="input-group">
-              <input 
-                placeholder="RAM (0 = Unlimited)" 
-                type="number" 
-                required 
-                value={form.ram}
-                onChange={e => setForm({ ...form, ram: e.target.value })}
-                disabled={isLoading}
-              />
-              <span className="unit-label">GB</span>
-            </div>
-            
-            <div className="input-group">
-              <input 
-                placeholder="CPU (0 = Unlimited)" 
-                type="number" 
-                required 
-                value={form.cpu}
-                onChange={e => setForm({ ...form, cpu: e.target.value })}
-                disabled={isLoading}
-              />
-              <span className="unit-label">%</span>
-            </div>
-            
-            <button disabled={isLoading}>
-              {isLoading ? `Creating Panel... ${progress}%` : 'Deploy'}
-            </button>
-            
-            {isLoading && (
-              <>
-                {renderProgressBar(progress)}
-                <div className="progress-text">
-                  {progress < 30 && 'Menginisialisasi server...'}
-                  {progress >= 30 && progress < 70 && 'Mengalokasikan sumber daya...'}
-                  {progress >= 70 && progress < 100 && 'Menyelesaikan konfigurasi...'}
-                  {progress === 100 && 'Selesai!'}
-                </div>
-              </>
-            )}
-          </form>
-        )}
-
-        {typedResult && (
-          <div style={{
-            marginTop: '2rem',
-            background: 'white',
-            borderRadius: '16px',
-            padding: '1.5rem',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-            width: '100%',
-            position: 'relative',
-            whiteSpace: 'pre-wrap',
-            fontSize: '1rem',
-            lineHeight: '1.6',
-            animation: 'slideIn 0.5s ease',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            {typedResult}
-            <button
-              onClick={copyToClipboard}
-              className="copy-btn">
-              📋 Salin Hasil
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+        // Initialize
+        renderLoginForm();
+    </script>
+</body>
+</html>
