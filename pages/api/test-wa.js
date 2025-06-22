@@ -1,4 +1,4 @@
-import { sendWhatsAppNotification } from '@/lib/notify';
+import { sendWhatsAppNotification } from '../../lib/notify';
 
 export default async function handler(req, res) {
   const { success, error } = await sendWhatsAppNotification('🔔 TEST: Pesan dari Twilio');
