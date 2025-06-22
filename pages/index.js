@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 
 const users = [
-  ['admin123', 'kiyy'],
-  ['testpass', 'tester']
+  ['fullpower', 'kiyy'],
+  ['powerofzietra', 'zietra']
 ];
 
 export default function Home() {
@@ -138,8 +138,12 @@ export default function Home() {
 • DDoS / Flood / Serangan ke Server
 • Penipuan, Carding, atau Abuse
 • Phishing / Malware
+• No Rusuh
 
 📌 Jika melanggar, server akan dihapus tanpa pemberitahuan!
+
+• Ikuti Saluran Admin
+> https://whatsapp.com/channel/0029VbARjA7GU3BGDOI4sk2P
 
 👑 Author: IKYY
 `;
