@@ -1,43 +1,28 @@
 import { supabase } from '@/lib/supabase';
-import sgMail from '@sendgrid/mail';
+import { sendWhatsAppNotification } from '@/lib/notify';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const { email, name } = req.body;
 
-  try {
-    // 1. Simpan request ke database
-    const { error } = await supabase
-      .from('access_requests')
-      .insert([{ email, name }]);
+  // 1. Simpan request ke database
+  const { error } = await supabase
+    .from('access_requests')
+    .insert([{ email, name }]);
 
-    if (error) throw error;
-
-    // 2. Kirim notifikasi ke admin
-    await sendAdminNotification(email, name);
-
-    res.status(200).json({ success: true });
-  } catch (error) {
-    res.status(500).json({ 
-      error: error.message || 'Failed to process request' 
-    });
+  if (error) {
+    return res.status(400).json({ error: 'Email sudah terdaftar' });
   }
-}
 
-async function sendAdminNotification(email, name) {
-  const message = `📢 New Access Request:\nEmail: ${email}\nName: ${name}`;
-  
-  // Kirim via WhatsApp (Twilio)
-  const twilio = require('twilio')(
-    process.env.TWILIO_SID,
-    process.env.TWILIO_TOKEN
-  );
-  await twilio.messages.create({
-    body: message,
-    from: 'whatsapp:+14155238886',
-    to: `whatsapp:${process.env.ADMIN_PHONE}`
-  });
+  // 2. Kirim notifikasi WhatsApp
+  const message = `📢 *REQUEST AKSS BARU*\n\nEmail: ${email}\nNama: ${name || '-'}\n\nSegera cek di dashboard admin!`;
+  const { success, sid } = await sendWhatsAppNotification(message);
 
-  // ... (Tambahkan email/telegram jika perlu)
+  if (!success) {
+    // Fallback ke email jika WhatsApp gagal
+    await sendEmailFallback(email, name);
+  }
+
+  res.status(200).json({ success: true, sid });
 }
