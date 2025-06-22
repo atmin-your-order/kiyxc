@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 
 const users = [
   ['fullpower', 'kiyy'],
-  ['powerofzietra', 'zietra'],
   ['amane01', 'amane']
 ];
 
