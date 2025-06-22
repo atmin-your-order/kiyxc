@@ -1,477 +1,134 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IKYY Deployment Panel</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', sans-serif;
-        }
+import { useState, useEffect, useRef } from 'react';
 
-        body {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #0f0c29, #302b63);
-            color: white;
-            overflow-x: hidden;
-        }
+const users = [
+  ['admin123', 'kiyy'],
+  ['testpass', 'tester']
+];
 
-        #particle-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
+export default function Home() {
+  // === State ===
+  const [login, setLogin] = useState(false);
+  const [inputLogin, setInputLogin] = useState({ username: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
+  const [form, setForm] = useState({ username: '', ram: '', cpu: '' });
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
+  const [typedResult, setTypedResult] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [loginProgress, setLoginProgress] = useState(0);
+  
+  // Refs untuk auto-focus
+  const usernameRef = useRef(null);
+  const deployUsernameRef = useRef(null);
 
-        .container {
-            position: relative;
-            z-index: 2;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
+  // Auto-focus saat login berhasil
+  useEffect(() => {
+    if (login) {
+      deployUsernameRef.current?.focus();
+    } else {
+      usernameRef.current?.focus();
+    }
+  }, [login]);
 
-        .glass-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(12px);
-            border-radius: 16px;
-            padding: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            margin-bottom: 2rem;
-            transition: transform 0.3s ease;
-        }
+  // Reset form on successful login
+  useEffect(() => {
+    if (login) {
+      setInputLogin({ username: '', password: '' });
+    }
+  }, [login]);
 
-        .glass-card:hover {
-            transform: translateY(-5px);
-        }
+  // Animasi Progress Bar (Login)
+  useEffect(() => {
+    if (loginProgress > 0 && loginProgress < 100) {
+      const timer = setTimeout(() => {
+        setLoginProgress(prev => Math.min(prev + Math.random() * 15 + 5, 100));
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [loginProgress]);
 
-        h1 {
-            text-align: center;
-            margin-bottom: 1.5rem;
-            font-size: 2.2rem;
-            background: linear-gradient(90deg, #72ffb6, #10d3ff);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
+  // Animasi Progress Bar (Deploy)
+  useEffect(() => {
+    if (isLoading && progress < 100) {
+      const timer = setTimeout(() => {
+        setProgress(prev => Math.min(prev + Math.random() * 10 + 1, 100));
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, progress]);
 
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        input, select {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 10px;
-            border: none;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 1rem;
-            border: 1px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: rgba(114, 255, 182, 0.5);
-            box-shadow: 0 0 0 3px rgba(114, 255, 182, 0.2);
-        }
-
-        .input-with-unit {
-            position: relative;
-        }
-
-        .unit {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        button {
-            width: 100%;
-            padding: 14px;
-            border-radius: 10px;
-            border: none;
-            background: linear-gradient(90deg, #72ffb6, #10d3ff);
-            color: #1a1a2e;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(114, 255, 182, 0.4);
-        }
-
-        button:disabled {
-            background: #ccc;
-            transform: none;
-            box-shadow: none;
-            cursor: not-allowed;
-        }
-
-        .progress-container {
-            width: 100%;
-            margin: 1rem 0;
-        }
-
-        .progress-bar {
-            height: 8px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            border-radius: 10px;
-            background: linear-gradient(90deg, #72ffb6, #10d3ff);
-            transition: width 0.3s ease;
-        }
-
-        .progress-text {
-            text-align: center;
-            margin-top: 5px;
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .result-box {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-top: 1.5rem;
-            white-space: pre-wrap;
-            font-family: monospace;
-            border: 1px solid rgba(114, 255, 182, 0.2);
-        }
-
-        .copy-btn {
-            margin-top: 1rem;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .copy-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-    </style>
-</head>
-<body>
-    <canvas id="particle-canvas"></canvas>
+  // Handle Login
+  const handleLogin = (e) => {
+    e.preventDefault();
+    setLoginProgress(10); // Start progress
     
-    <div class="container">
-        <div class="glass-card">
-            <h1>IKYY Deployment Panel</h1>
-            
-            <div id="form-content">
-                <!-- Form will be rendered here -->
-            </div>
-            
-            <div id="result-container" style="display: none;">
-                <div class="result-box" id="result-box"></div>
-                <button class="copy-btn" id="copy-btn">📋 Copy Result</button>
-            </div>
-        </div>
-    </div>
+    const found = users.find(([pass, user]) => 
+      user === inputLogin.username && pass === inputLogin.password
+    );
 
-    <script>
-        // Particle Background
-        const canvas = document.getElementById('particle-canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        const particles = [];
-        for (let i = 0; i < 80; i++) {
-            particles.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                size: Math.random() * 3 + 1,
-                speedX: Math.random() * 2 - 1,
-                speedY: Math.random() * 2 - 1,
-                color: `rgba(114, 255, 182, ${Math.random() * 0.3 + 0.1})`
-            });
-        }
-
-        function animateParticles() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            particles.forEach(p => {
-                p.x += p.speedX;
-                p.y += p.speedY;
-                
-                if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
-                if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
-                
-                ctx.fillStyle = p.color;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            
-            requestAnimationFrame(animateParticles);
-        }
-        animateParticles();
-
-        // App Logic
-        const users = [
-            ['admin123', 'kiyy'],
-            ['testpass', 'tester']
-        ];
-
-        let login = false;
-        let inputLogin = { username: '', password: '' };
-        let form = { username: '', ram: '', cpu: '' };
-        let result = null;
-        let error = '';
-        let typedResult = '';
-        let isTyping = false;
-        let isLoading = false;
-        let progress = 0;
-        let loginProgress = 0;
-
-        const formContent = document.getElementById('form-content');
-        const resultContainer = document.getElementById('result-container');
-        const resultBox = document.getElementById('result-box');
-        const copyBtn = document.getElementById('copy-btn');
-
-        function renderLoginForm() {
-            formContent.innerHTML = `
-                <form id="login-form">
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input 
-                            type="text" 
-                            value="${inputLogin.username}"
-                            placeholder="Enter username"
-                            required
-                        >
-                    </div>
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input 
-                            type="password" 
-                            value="${inputLogin.password}"
-                            placeholder="Enter password"
-                            required
-                        >
-                    </div>
-                    ${error ? `<p style="color: #ff6b6b; margin-bottom: 1rem;">${error}</p>` : ''}
-                    <button type="submit" ${loginProgress > 0 ? 'disabled' : ''}>
-                        ${loginProgress > 0 ? `Loading... ${loginProgress}%` : 'Login'}
-                    </button>
-                    ${loginProgress > 0 ? `
-                        <div class="progress-container">
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: ${loginProgress}%"></div>
-                            </div>
-                        </div>
-                    ` : ''}
-                </form>
-            `;
-
-            const form = document.getElementById('login-form');
-            const inputs = form.querySelectorAll('input');
-            
-            inputs[0].addEventListener('input', (e) => {
-                inputLogin.username = e.target.value;
-            });
-            
-            inputs[1].addEventListener('input', (e) => {
-                inputLogin.password = e.target.value;
-            });
-            
-            form.addEventListener('submit', handleLogin);
-        }
-
-        function renderDeployForm() {
-            formContent.innerHTML = `
-                <form id="deploy-form">
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input 
-                            type="text" 
-                            value="${form.username}"
-                            placeholder="Enter username"
-                            ${isLoading ? 'disabled' : ''}
-                            required
-                        >
-                    </div>
-                    <div class="form-group">
-                        <label>RAM Allocation</label>
-                        <div class="input-with-unit">
-                            <input 
-                                type="number" 
-                                value="${form.ram}"
-                                placeholder="0 for unlimited"
-                                ${isLoading ? 'disabled' : ''}
-                                required
-                            >
-                            <span class="unit">GB</span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>CPU Allocation</label>
-                        <div class="input-with-unit">
-                            <input 
-                                type="number" 
-                                value="${form.cpu}"
-                                placeholder="0 for unlimited"
-                                ${isLoading ? 'disabled' : ''}
-                                required
-                            >
-                            <span class="unit">%</span>
-                        </div>
-                    </div>
-                    <button type="submit" ${isLoading ? 'disabled' : ''}>
-                        ${isLoading ? `Deploying... ${progress}%` : 'Deploy Server'}
-                    </button>
-                    ${isLoading ? `
-                        <div class="progress-container">
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: ${progress}%"></div>
-                            </div>
-                            <div class="progress-text">
-                                ${progress < 30 ? 'Initializing server...' : 
-                                  progress < 70 ? 'Allocating resources...' : 
-                                  progress < 100 ? 'Finalizing configuration...' : 
-                                  'Done!'}
-                            </div>
-                        </div>
-                    ` : ''}
-                </form>
-            `;
-
-            const form = document.getElementById('deploy-form');
-            const inputs = form.querySelectorAll('input');
-            
-            inputs[0].addEventListener('input', (e) => {
-                form.username = e.target.value;
-            });
-            
-            inputs[1].addEventListener('input', (e) => {
-                form.ram = e.target.value;
-            });
-            
-            inputs[2].addEventListener('input', (e) => {
-                form.cpu = e.target.value;
-            });
-            
-            form.addEventListener('submit', handleDeploy);
-        }
-
-        function handleLogin(e) {
-            e.preventDefault();
-            setLoginProgress(0);
-            
-            const found = users.find(([pass, user]) => 
-                user === inputLogin.username && pass === inputLogin.password
-            );
-            
-            const interval = setInterval(() => {
-                setLoginProgress(prev => {
-                    const newVal = prev + Math.floor(Math.random() * 15) + 5;
-                    if (newVal >= 100) {
-                        clearInterval(interval);
-                        setTimeout(() => {
-                            if (found) {
-                                login = true;
-                                error = '';
-                                renderDeployForm();
-                            } else {
-                                error = 'Invalid username or password!';
-                                renderLoginForm();
-                            }
-                            setLoginProgress(0);
-                        }, 500);
-                        return 100;
-                    }
-                    return newVal;
-                });
-            }, 200);
-        }
-
-        async function handleDeploy(e) {
-            e.preventDefault();
-            isLoading = true;
-            progress = 0;
-            result = null;
-            typedResult = '';
-            isTyping = false;
-            resultContainer.style.display = 'none';
-            renderDeployForm();
-
-            // Progress animation
-            const progressInterval = setInterval(() => {
-                setProgress(prev => {
-                    const newVal = prev + Math.floor(Math.random() * 10) + 1;
-                    if (newVal >= 100) {
-                        clearInterval(progressInterval);
-                        return 100;
-                    }
-                    return newVal;
-                });
-            }, 300);
-
-            try {
-                // Your original POST logic
-                const res = await fetch('/api/deploy', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(form)
-                });
-                
-                const data = await res.json();
-                setResult(data);
-                showResult(data);
-            } catch (err) {
-                console.error('Deployment failed:', err);
-                error = 'Deployment failed. Please try again.';
-            } finally {
-                isLoading = false;
-                progress = 100;
-                renderDeployForm();
+    const interval = setInterval(() => {
+      setLoginProgress(prev => {
+        const newProgress = prev + Math.random() * 15 + 5;
+        if (newProgress >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            if (found) {
+              setLogin(true);
+              setError('');
+            } else {
+              setError('Username atau password salah!');
             }
+            setLoginProgress(0);
+          }, 500);
+          return 100;
         }
+        return newProgress;
+      });
+    }, 200);
+  };
 
-        function showResult(data) {
-            resultContainer.style.display = 'block';
-            
-            const createdAt = new Date();
-            const expireAt = new Date(createdAt);
-            expireAt.setDate(expireAt.getDate() + 30);
+  // Handle Deploy (TIDAK DIUBAH UNTUK JAGA API)
+  const handleDeploy = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setProgress(0);
+    setResult(null);
+    setTypedResult('');
+    setIsTyping(false);
 
-            const formatDate = (d) => d.toLocaleDateString('id-ID');
+    setTimeout(async () => {
+      const res = await fetch('/api/deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      const data = await res.json();
+      setResult(data);
+      setProgress(100);
+      setIsTyping(true);
+      setIsLoading(false);
+    }, 2500);
+  };
 
-            const output = `🔥 AKUN BERHASIL DIBUAT 🔥
+  // Typing Effect (TIDAK DIUBAH)
+  useEffect(() => {
+    if (result && isTyping) {
+      const createdAt = new Date();
+      const expireAt = new Date(createdAt);
+      expireAt.setDate(expireAt.getDate() + 30);
 
-👤 Username: ${data.username}
-🔐 Password: ${data.password}
-🌐 Host: ${data.panel || 'Tidak tersedia'}
+      const formatDate = (d) => d.toLocaleDateString('id-ID');
 
-💾 RAM: ${data.ram === 0 ? 'Unlimited' : `${data.ram} GB`}
-⚙️ CPU: ${data.cpu === 0 ? 'Unlimited' : `${data.cpu} %`}
+      const output = `🔥 AKUN BERHASIL DIBUAT 🔥
+
+👤 Username: ${result.username}
+🔐 Password: ${result.password}
+🌐 Host: ${result.panel || 'Tidak tersedia'}
+
+💾 RAM: ${result.ram === 0 ? 'Unlimited' : `${result.ram} GB`}
+⚙️ CPU: ${result.cpu === 0 ? 'Unlimited' : `${result.cpu} %`}
 📊 Status: Aktif ✅
 📅 Dibuat: ${formatDate(createdAt)}
 ⏳ Aktif 30 Hari
@@ -487,43 +144,330 @@
 👑 Author: IKYY
 `;
 
-            let i = 0;
-            const typingInterval = setInterval(() => {
-                typedResult = output.slice(0, i);
-                resultBox.textContent = typedResult;
-                i++;
-                if (i > output.length) {
-                    clearInterval(typingInterval);
-                    isTyping = false;
-                }
-            }, 10);
+      let i = 0;
+      const typing = setInterval(() => {
+        setTypedResult(output.slice(0, i));
+        i++;
+        if (i > output.length) {
+          clearInterval(typing);
+          setIsTyping(false);
         }
+      }, 10);
+    }
+  }, [result, isTyping]);
 
-        copyBtn.addEventListener('click', () => {
-            navigator.clipboard.writeText(typedResult);
-            const originalText = copyBtn.innerHTML;
-            copyBtn.innerHTML = '✓ Copied!';
-            setTimeout(() => {
-                copyBtn.innerHTML = originalText;
-            }, 2000);
-        });
+  // Copy to Clipboard
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(typedResult);
+    alert('✅ Berhasil disalin!');
+  };
 
-        function setLoginProgress(val) {
-            loginProgress = val;
-            if (!login) renderLoginForm();
+  // Komponen Progress Bar
+  const ProgressBar = ({ percentage, color }) => (
+    <div style={{
+      width: '100%',
+      height: '8px',
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      borderRadius: '10px',
+      overflow: 'hidden',
+      margin: '10px 0'
+    }}>
+      <div style={{
+        width: `${percentage}%`,
+        height: '100%',
+        background: color || 'linear-gradient(90deg, #8A2BE2, #4B0082)',
+        borderRadius: '10px',
+        transition: 'width 0.3s ease'
+      }} />
+    </div>
+  );
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      fontFamily: "'Segoe UI', sans-serif",
+      padding: '20px'
+    }}>
+      {/* Global Styles */}
+      <style jsx global>{`
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
         }
-
-        function setProgress(val) {
-            progress = val;
-            if (login) renderDeployForm();
+        body {
+          overflow-x: hidden;
         }
-
-        function setResult(data) {
-            result = data;
+        input, select, button {
+          font-family: inherit;
+          font-size: 1rem;
         }
+        button {
+          cursor: pointer;
+          transition: all 0.3s;
+        }
+        button:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+      `}</style>
 
-        // Initialize
-        renderLoginForm();
-    </script>
-</body>
-</html>
+      {/* Main Container */}
+      <div style={{
+        width: '100%',
+        maxWidth: '500px',
+        background: 'rgba(255, 255, 255, 0.1)',
+        backdropFilter: 'blur(10px)',
+        borderRadius: '20px',
+        padding: '2rem',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        color: 'white'
+      }}>
+        <h1 style={{
+          textAlign: 'center',
+          marginBottom: '2rem',
+          fontSize: '1.8rem',
+          fontWeight: '600',
+          background: 'linear-gradient(90deg, #fff, #ccc)',
+          WebkitBackgroundClip: 'text',
+          color: 'transparent'
+        }}>
+          🚀 Panel Deployment
+        </h1>
+
+        {!login ? (
+          // Login Form
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div>
+              <input
+                ref={usernameRef}
+                type="text"
+                placeholder="Username"
+                value={inputLogin.username}
+                onChange={(e) => setInputLogin({...inputLogin, username: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '12px 15px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  marginBottom: '5px'
+                }}
+                required
+              />
+            </div>
+
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password"
+                value={inputLogin.password}
+                onChange={(e) => setInputLogin({...inputLogin, password: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '12px 15px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  paddingRight: '40px'
+                }}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: 'white',
+                  fontSize: '0.8rem'
+                }}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              style={{
+                padding: '12px',
+                borderRadius: '10px',
+                border: 'none',
+                background: 'linear-gradient(90deg, #8A2BE2, #4B0082)',
+                color: 'white',
+                fontWeight: '600',
+                marginTop: '10px'
+              }}
+            >
+              {loginProgress > 0 ? `Memverifikasi... ${Math.min(loginProgress, 100)}%` : 'Login'}
+            </button>
+
+            {loginProgress > 0 && <ProgressBar percentage={loginProgress} color="linear-gradient(90deg, #FF8A00, #FF0058)" />}
+            {error && <p style={{ color: '#FF6B6B', textAlign: 'center', marginTop: '10px' }}>{error}</p>}
+          </form>
+        ) : (
+          // Deployment Form
+          <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <input
+              ref={deployUsernameRef}
+              type="text"
+              placeholder="Username"
+              value={form.username}
+              onChange={(e) => setForm({...form, username: e.target.value})}
+              style={{
+                width: '100%',
+                padding: '12px 15px',
+                borderRadius: '10px',
+                border: 'none',
+                background: 'rgba(255, 255, 255, 0.2)',
+                color: 'white'
+              }}
+              required
+              disabled={isLoading}
+            />
+
+            <div style={{ position: 'relative' }}>
+              <input
+                type="number"
+                placeholder="RAM (0 = Unlimited)"
+                value={form.ram}
+                onChange={(e) => setForm({...form, ram: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '12px 15px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  paddingRight: '50px'
+                }}
+                required
+                disabled={isLoading}
+              />
+              <span style={{
+                position: 'absolute',
+                right: '15px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'rgba(255, 255, 255, 0.7)'
+              }}>GB</span>
+            </div>
+
+            <div style={{ position: 'relative' }}>
+              <input
+                type="number"
+                placeholder="CPU (0 = Unlimited)"
+                value={form.cpu}
+                onChange={(e) => setForm({...form, cpu: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '12px 15px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  paddingRight: '50px'
+                }}
+                required
+                disabled={isLoading}
+              />
+              <span style={{
+                position: 'absolute',
+                right: '15px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'rgba(255, 255, 255, 0.7)'
+              }}>%</span>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              style={{
+                padding: '12px',
+                borderRadius: '10px',
+                border: 'none',
+                background: isLoading 
+                  ? 'linear-gradient(90deg, #4B0082, #8A2BE2)'
+                  : 'linear-gradient(90deg, #8A2BE2, #4B0082)',
+                color: 'white',
+                fontWeight: '600',
+                marginTop: '10px'
+              }}
+            >
+              {isLoading ? `Membuat Panel... ${progress}%` : 'Deploy Sekarang'}
+            </button>
+
+            {isLoading && (
+              <>
+                <ProgressBar percentage={progress} />
+                <p style={{ 
+                  textAlign: 'center', 
+                  fontSize: '0.9rem',
+                  color: 'rgba(255, 255, 255, 0.8)'
+                }}>
+                  {progress < 30 && 'Menginisialisasi server...'}
+                  {progress >= 30 && progress < 70 && 'Mengalokasikan resource...'}
+                  {progress >= 70 && progress < 100 && 'Menyelesaikan konfigurasi...'}
+                  {progress === 100 && 'Selesai!'}
+                </p>
+              </>
+            )}
+          </form>
+        )}
+
+        {/* Hasil Output */}
+        {typedResult && (
+          <div style={{
+            marginTop: '2rem',
+            background: 'rgba(0, 0, 0, 0.3)',
+            borderRadius: '15px',
+            padding: '1.5rem',
+            whiteSpace: 'pre-wrap',
+            fontSize: '0.9rem',
+            lineHeight: '1.6',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '3px',
+              background: 'linear-gradient(90deg, #8A2BE2, #4B0082)'
+            }} />
+            {typedResult}
+            <button
+              onClick={copyToClipboard}
+              style={{
+                padding: '10px',
+                borderRadius: '8px',
+                border: 'none',
+                background: 'rgba(255, 255, 255, 0.2)',
+                color: 'white',
+                marginTop: '15px',
+                width: '100%',
+                fontWeight: '600',
+                backdropFilter: 'blur(5px)'
+              }}
+            >
+              📋 Salin Hasil
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
