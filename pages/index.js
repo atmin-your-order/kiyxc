@@ -171,7 +171,7 @@ const handleRequestAccess = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form)
       })
-    });
+    };
     
     const data = await response.json();
     if (data.success) {
