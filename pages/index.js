@@ -2,9 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase clients
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase, supabaseKey, supabaseUrl } from '../lib/supabase'
 const supabaseAdmin = createClient(
   supabaseUrl, 
   process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
