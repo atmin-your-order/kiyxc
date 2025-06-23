@@ -141,7 +141,7 @@ export default function Home() {
               if (error) {
                 setError(error.message);
               } else {
-                setError('Check your email for confirmation!');
+                setError('Wait for the admin to approve your registration!');
                 setAuthView('login');
               }
               setAuthProgress(0);
