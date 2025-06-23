@@ -163,6 +163,30 @@ export default function Home() {
     setTypedResult('');
     setIsTyping(false);
 
+    // Di bagian atas file (setelah import)
+const handleRequestAccess = async () => {
+  try {
+    const response = await fetch('/api/request-access', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        email: 'user@example.com', 
+        name: 'John Doe' 
+      })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      alert('Request berhasil dikirim!');
+    } else {
+      alert(`Error: ${data.error}`);
+    }
+  } catch (error) {
+    alert('Gagal mengirim request: ' + error.message);
+  }
+};
+
+
     setTimeout(async () => {
       const res = await fetch('/api/deploy', {
         method: 'POST',
