@@ -7,8 +7,6 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 //STATE
-const [session, setSession] = useState(null);
-const [adminVerified, setAdminVerified] = useState(false);
 const [adminInputPassword, setAdminInputPassword] = useState('');
 
 //akses session
