@@ -271,57 +271,57 @@ export default function Home() {
   );
 
   return (
-
-        //logika admin
     <>
-    {/*ADMIN LOGIN*/}
-{isEmailAdmin && !adminVerified && (
-  <div style={{ marginTop: '2rem', background: '#222', padding: '1rem', borderRadius: '10px' }}>
-    <h3 style={{ color: '#fff' }}>🔐 Masukkan Password Admin</h3>
-    <input
-      type="password"
-      placeholder="Password Admin"
-      value={adminInputPassword}
-      onChange={(e) => setAdminInputPassword(e.target.value)}
-      style={{
-        width: '100%',
-        padding: '10px',
-        borderRadius: '8px',
-        border: 'none',
-        marginBottom: '10px',
-        background: '#444',
-        color: 'white'
-      }}
-    />
-    <button
-      onClick={() => {
-        if (adminInputPassword === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
-          setAdminVerified(true);
-        } else {
-          alert('❌ Password salah!');
-        }
-      }}
-      style={{
-        background: '#28a745',
-        color: 'white',
-        padding: '10px 20px',
-        borderRadius: '8px',
-        border: 'none',
-        cursor: 'pointer'
-      }}
-    >
-      Verifikasi
-    </button>
-  </div>
-)}
-{/*ADMIN BERHASIL LOGIN*/}
-{isEmailAdmin && adminVerified && (
-  <div style={{ marginTop: '2rem', padding: '1rem', background: '#111', borderRadius: '10px' }}>
-    <h3 style={{ color: '#fff' }}>👑 Panel Admin</h3>
-    <ApproveUsers />
-  </div>
-)}
-  </>
+  {/* ADMIN LOGIN */}
+  {isEmailAdmin && !adminVerified && (
+    <div style={{ marginTop: '2rem', background: '#222', padding: '1rem', borderRadius: '10px' }}>
+      <h3 style={{ color: '#fff' }}>🔐 Masukkan Password Admin</h3>
+      <input
+        type="password"
+        placeholder="Password Admin"
+        value={adminInputPassword}
+        onChange={(e) => setAdminInputPassword(e.target.value)}
+        style={{
+          width: '100%',
+          padding: '10px',
+          borderRadius: '8px',
+          border: 'none',
+          marginBottom: '10px',
+          background: '#444',
+          color: 'white'
+        }}
+      />
+      <button
+        onClick={() => {
+          if (adminInputPassword === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
+            setAdminVerified(true);
+          } else {
+            alert('❌ Password salah!');
+          }
+        }}
+        style={{
+          background: '#28a745',
+          color: 'white',
+          padding: '10px 20px',
+          borderRadius: '8px',
+          border: 'none',
+          cursor: 'pointer'
+        }}
+      >
+        Verifikasi
+      </button>
+    </div>
+  )}
+
+  {/* ADMIN BERHASIL LOGIN */}
+  {isEmailAdmin && adminVerified && (
+    <div style={{ marginTop: '2rem', padding: '1rem', background: '#111', borderRadius: '10px' }}>
+      <h3 style={{ color: '#fff' }}>👑 Panel Admin</h3>
+      <ApproveUsers />
+    </div>
+  )}
+</>
+
     <div style={{
       minHeight: '100vh',
       display: 'flex',
