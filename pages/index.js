@@ -320,9 +320,8 @@ export default function Home() {
     <h3 style={{ color: '#fff' }}>👑 Panel Admin</h3>
     <ApproveUsers />
   </div>
-  </>
 )}
-  
+  </>
     <div style={{
       minHeight: '100vh',
       display: 'flex',
