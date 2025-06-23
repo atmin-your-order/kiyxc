@@ -274,7 +274,7 @@ export default function Home() {
 
         //logika admin
     <>
-    {/ADMIN LOGIN/}
+    {/*ADMIN LOGIN*/}
 {isEmailAdmin && !adminVerified && (
   <div style={{ marginTop: '2rem', background: '#222', padding: '1rem', borderRadius: '10px' }}>
     <h3 style={{ color: '#fff' }}>🔐 Masukkan Password Admin</h3>
@@ -314,7 +314,7 @@ export default function Home() {
     </button>
   </div>
 )}
-{/ADMIN BERHASIL LOGIN/}
+{/*ADMIN BERHASIL LOGIN*/}
 {isEmailAdmin && adminVerified && (
   <div style={{ marginTop: '2rem', padding: '1rem', background: '#111', borderRadius: '10px' }}>
     <h3 style={{ color: '#fff' }}>👑 Panel Admin</h3>
