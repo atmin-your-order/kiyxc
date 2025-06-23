@@ -1,4 +1,3 @@
-import { supabase } from '../../lib/supabase';
 import { sendWhatsAppNotification } from '../../lib/notify';
 import { supabaseAdmin } from '../../lib/supabase-admin';
 
