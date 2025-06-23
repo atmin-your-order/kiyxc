@@ -1,13 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client
+// Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
-const isEmailAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
+//STATE
+const [session, setSession] = useState(null);
 const [adminVerified, setAdminVerified] = useState(false);
 const [adminInputPassword, setAdminInputPassword] = useState('');
+
+//akses session
+const isEmailAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
 export default function Home() {
   // === State ===
