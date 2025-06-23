@@ -321,21 +321,6 @@ export default function Home() {
       </div>
     )}
 
-    {/* LANJUT TAMPILAN UTAMA */}
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      fontFamily: "'Segoe UI', sans-serif",
-      padding: '20px'
-    }}>
-      {/* Konten lainnya... */}
-    </div>
-  </>
-);
-
     <div style={{
       minHeight: '100vh',
       display: 'flex',
