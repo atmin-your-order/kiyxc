@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('access_requests')
       .insert([{ email, name }]);
 
