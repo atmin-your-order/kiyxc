@@ -1,5 +1,4 @@
 import { sendWhatsAppNotification } from '../../lib/notify';
-import { supabaseAdmin } from '../../lib/supabase-admin';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -13,21 +12,20 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Email tidak valid' });
   }
 
+  const message = `
+📢 *REQUEST SIGN UP*
+
+📧 Email: ${email}
+👤 Nama: ${name || '-'}
+
+Segera cek dashboard admin untuk menyetujui!`;
+
   try {
-    const { error } = await supabaseAdmin
-      .from('access_requests')
-      .insert([{ email, name }]);
-
-    if (error) {
-      console.error('SUPABASE INSERT ERROR:', error.message);
-      return res.status(400).json({ error: error.message });
-    }
-
-    const message = `📢 *REQUEST AKSES BARU*\n\nEmail: ${email}\nNama: ${name || '-'}\n\nSegera cek di dashboard admin!`;
     const { success, sid } = await sendWhatsAppNotification(message);
 
     if (!success) {
-      await sendEmailFallback(email, name);
+      console.warn('Gagal kirim WA. Fallback email akan digunakan.');
+      await sendEmailFallback?.(email, name); // optional, if defined
     }
 
     res.status(200).json({ success: true, sid });
