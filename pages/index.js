@@ -29,6 +29,9 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [authProgress, setAuthProgress] = useState(0);
+  const [session, setSession] = useState(null);
+  const [adminVerified, setAdminVerified] = useState(false);
+  const [adminInputPassword, setAdminInputPassword] = useState('');
   
   // Refs untuk auto-focus
   const emailRef = useRef(null);
