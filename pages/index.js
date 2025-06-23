@@ -6,12 +6,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-//STATE
-const [adminInputPassword, setAdminInputPassword] = useState('');
-
-//akses session
-const isEmailAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-
 export default function Home() {
   // === State ===
   const [authView, setAuthView] = useState('login'); // 'login' or 'signup'
@@ -29,6 +23,15 @@ export default function Home() {
   const [authProgress, setAuthProgress] = useState(0);
   const [adminVerified, setAdminVerified] = useState(false);
   const [adminInputPassword, setAdminInputPassword] = useState('');
+
+  // === Ref ===
+  const emailRef = useRef(null);
+  const deployUsernameRef = useRef(null);
+
+  // === Admin Check ===
+  const isEmailAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
+  // lanjut ke useEffect() dan logika lainnya...
   
   // Refs untuk auto-focus
   const emailRef = useRef(null);
