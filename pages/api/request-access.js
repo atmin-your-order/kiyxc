@@ -13,12 +13,27 @@ export default async function handler(req, res) {
   }
 
   const message = `
-📢 *REQUEST SIGN UP*
+📢 *PERMINTAAN AKSES BARU DITERIMA!*
 
-📧 Email: ${email}
-👤 Nama: ${name || '-'}
+🔐 *Layanan:* Panel Web CPanel Premium
+📧 *Email:* ${email}
+👤 *Nama:* ${name || '-'}
 
-Segera cek dashboard admin untuk menyetujui!`;
+📝 Pendaftar ini telah mengisi formulir akses panel CPanel.
+
+⚠️ *PERHATIAN ADMIN!*
+Jika pendaftar ini *BELUM MELAKUKAN PEMBAYARAN*, 
+abaikan permintaan ini dan JANGAN BUATKAN AKUN PANEL.
+
+✅ Jika SUDAH DIBAYAR:
+Silakan buat akun di panel dan kirimkan detail login seperti biasa.
+
+📌 *Abaikan pesan ini jika tidak relevan atau user tidak membeli.*
+🛡️ Ini adalah sistem verifikasi internal otomatis.
+
+—
+🤖 *Sistem Otomatis Panel KIYXC*
+`;
 
   try {
     const { success, sid } = await sendWhatsAppNotification(message);
