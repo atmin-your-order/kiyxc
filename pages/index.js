@@ -172,18 +172,6 @@ const handleRequestAccess = async () => {
       body: JSON.stringify(form)
       })
     };
-    
-    const data = await response.json();
-    if (data.success) {
-      alert('Request berhasil dikirim!');
-    } else {
-      alert(`Error: ${data.error}`);
-    }
-  } catch (error) {
-    alert('Gagal mengirim request: ' + error.message);
-  }
-};
-
 
     setTimeout(async () => {
       const res = await fetch('/api/deploy', {
