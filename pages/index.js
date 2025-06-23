@@ -26,7 +26,6 @@ export default function Home() {
 
   // === Ref ===
   const emailRef = useRef(null);
-  const deployUsernameRef = useRef(null);
 
   // === Admin Check ===
   const isEmailAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
@@ -34,7 +33,6 @@ export default function Home() {
   // lanjut ke useEffect() dan logika lainnya...
   
   // Refs untuk auto-focus
-  const emailRef = useRef(null);
   const deployUsernameRef = useRef(null);
 
   // Check for existing session on mount
