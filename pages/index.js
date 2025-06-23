@@ -171,7 +171,7 @@ const handleRequestAccess = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form)
       })
-    }
+  },
 
     setTimeout(async () => {
       const res = await fetch('/api/deploy', {
