@@ -7,7 +7,7 @@ const supabaseAdmin = createClient(
 
 export default async function handler(req, res) {
   const { data, error } = await supabaseAdmin
-    .from('profiles')
+    .from('users')
     .select('id, email')
     .eq('approved', false);
 
