@@ -273,6 +273,7 @@ export default function Home() {
   return (
 
         //logika admin
+    <>
     {/ADMIN LOGIN/}
 {isEmailAdmin && !adminVerified && (
   <div style={{ marginTop: '2rem', background: '#222', padding: '1rem', borderRadius: '10px' }}>
@@ -319,6 +320,7 @@ export default function Home() {
     <h3 style={{ color: '#fff' }}>👑 Panel Admin</h3>
     <ApproveUsers />
   </div>
+  </>
 )}
   
     <div style={{
