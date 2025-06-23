@@ -95,7 +95,66 @@ export default function Home() {
       const { error } = await supabase.auth.signInWithPassword({
         email: inputLogin.email,
         password: inputLogin.password
+const handleSignup = async (e) => {
+  e.preventDefault();
+  setAuthProgress(10);
+  setError('');
+
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: inputSignup.email,
+      password: inputSignup.password
+    });
+
+    if (error) throw error;
+
+    if (data?.user) {
+      const userName = inputSignup.email.split('@')[0];
+
+      // ⬇️ Insert ke database (Supabase)
+      const { error: dbError } = await supabase
+        .from('access_requests') // ganti dengan nama tabel kamu
+        .insert([
+          {
+            email: inputSignup.email,
+            name: userName,
+            approved: false
+          }
+        ]);
+
+      if (dbError) throw dbError;
+
+      // ⬇️ Kirim juga ke endpoint API
+      await fetch('/api/request-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: inputSignup.email,
+          name: userName
+        })
       });
+
+      // ⬇️ Animasi progress bar sampai 100%
+      let current = 10;
+      const interval = setInterval(() => {
+        current += Math.random() * 15 + 5;
+        setAuthProgress(current);
+
+        if (current >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setError('✅ Akun berhasil dibuat! Menunggu persetujuan admin.');
+            setAuthView('login');
+            setAuthProgress(0);
+          }, 500);
+        }
+      }, 200);
+    }
+  } catch (err) {
+    setError(err.message || '❌ Terjadi kesalahan.');
+    setAuthProgress(0);
+  }
+}; 
 
       const interval = setInterval(() => {
         setAuthProgress(prev => {
@@ -120,93 +179,7 @@ export default function Home() {
   };
 
   // Handle Signup
-  const handleSignup = async (e) => {
-  e.preventDefault();
-  setAuthProgress(10);
-  setError('');
 
-  try {
-    const { data, error } = await supabase.auth.signUp({
-      email: inputSignup.email,
-      password: inputSignup.password
-    });
-
-    if (error) throw error;
-
-    if (data?.user) {
-      const userName = inputSignup.email.split('@')[0];
-
-      // ⬇️ Tambah ke database Supabase (tabel "users" misalnya)
-      const { error: dbError } = await supabase
-        .from('access_requests') // ganti sesuai nama tabel kamu
-        .insert([
-          {
-            email: inputSignup.email,
-            name: userName,
-            approved: false
-          }
-        ]);
-
-      if (dbError) throw dbError;
-
-      // ⬇️ Tetap kirim ke endpoint API /api/request-access
-      await fetch('/api/request-access', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: inputSignup.email,
-          name: userName
-        })
-      });
-
-      // Animasi loading progress
-      let current = 10;
-      const interval = setInterval(() => {
-        setAuthProgress((prev) => {
-          const newProgress = prev + 10;
-          if (newProgress >= 100) {
-            clearInterval(interval);
-            setTimeout(() => {
-              setError('✅ Akun berhasil dibuat! Menunggu persetujuan admin.');
-              setAuthView('login');
-              setAuthProgress(0);
-            }, 500);
-            return 100;
-          }
-          return newProgress;
-        });
-      }, 200);
-    }
-  } catch (err) {
-    setError(err.message || '❌ Terjadi kesalahan.');
-    setAuthProgress(0);
-  }
-};
-
-      const interval = setInterval(() => {
-        setAuthProgress(prev => {
-          const newProgress = prev + Math.random() * 15 + 5;
-          if (newProgress >= 100) {
-            clearInterval(interval);
-            setTimeout(() => {
-              if (error) {
-                setError(error.message);
-              } else {
-                setError('Wait for the admin to approve your registration!');
-                setAuthView('login');
-              }
-              setAuthProgress(0);
-            }, 500);
-            return 100;
-          }
-          return newProgress;
-        });
-      }, 200);
-    } catch (err) {
-      setError(err.message);
-      setAuthProgress(0);
-    }
-  };
 
   // Handle Logout
   const handleLogout = async () => {
