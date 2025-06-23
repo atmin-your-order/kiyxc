@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 
 // Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -85,6 +87,29 @@ export default function Home() {
     }
   }, [isLoading, progress]);
 
+  //cek data penting
+  const fetchPendingRequests = async () => {
+  const { data, error } = await supabase
+    .from('access_requests')
+    .select('*')
+    .eq('status', 'pending'); // Asumsi ada kolom 'status'
+
+  if (!error) setRequests(data);
+};
+
+  //approved logic
+  const handleApprove = async (requestId) => {
+  const { error } = await supabase
+    .from('access_requests')
+    .update({ 
+      status: 'approved',
+      approved_at: new Date().toISOString() 
+    })
+    .eq('id', requestId);
+
+  if (!error) fetchPendingRequests();
+};
+
   // Handle Login
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -121,15 +146,33 @@ export default function Home() {
 
   // Handle Signup
   const handleSignup = async (e) => {
-    e.preventDefault();
-    setAuthProgress(10);
-    setError('');
-    
-    try {
-      const { data, error } = await supabase.auth.signUp({
+  e.preventDefault();
+  setAuthProgress(10);
+  setError('');
+
+  try {
+    // 1. Simpan data ke tabel access_requests
+    const { error } = await supabase
+      .from('access_requests')
+      .insert([{
         email: inputSignup.email,
-        password: inputSignup.password
-      });
+        password: inputSignup.password, // 🔒 Hash di production!
+        status: 'pending', // Kolom wajib
+        requested_at: new Date().toISOString() // Kolom opsional
+      }]);
+
+    if (error) throw error;
+
+    // 2. Tampilkan pesan sukses
+    setError('Permintaan berhasil dikirim! Menunggu approval admin.');
+    setAuthView('login');
+    
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setAuthProgress(0);
+  }
+};
       if (data?.user) {
   await fetch('/api/request-access', {
     method: 'POST',
