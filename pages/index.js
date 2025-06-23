@@ -96,7 +96,52 @@ export default function Home() {
       const { error } = await supabase.auth.signInWithPassword({
         email: inputLogin.email,
         password: inputLogin.password
+  const handleSignup = async (e) => {
+  e.preventDefault();
+  setAuthProgress(10);
+  setError('');
+
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: inputSignup.email,
+      password: inputSignup.password
+    });
+
+    if (error) throw error;
+
+    if (data?.user) {
+      await fetch('/api/request-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: inputSignup.email,
+          name: inputSignup.email.split('@')[0]
+        })
       });
+
+      // PROGRESS animation jalan terus sampai 100 lalu reset
+      let current = 10;
+      const interval = setInterval(() => {
+        setAuthProgress((prev) => {
+          const newProgress = prev + 10;
+          if (newProgress >= 100) {
+            clearInterval(interval);
+            setTimeout(() => {
+              setError('✅ Akun kamu berhasil dibuat. Menunggu persetujuan admin!');
+              setAuthView('login');
+              setAuthProgress(0);
+            }, 500);
+            return 100;
+          }
+          return newProgress;
+        });
+      }, 200);
+    }
+  } catch (err) {
+    setError(err.message || '❌ Terjadi kesalahan.');
+    setAuthProgress(0);
+  }
+};    });
 
       const interval = setInterval(() => {
         setAuthProgress(prev => {
@@ -121,65 +166,7 @@ export default function Home() {
   };
 
   // Handle Signup
-  const interval = setInterval(() => {
-        setAuthProgress(prev => {
-          const newProgress = prev + Math.random() * 15 +const handleSignup = async (e) => {
-  e.preventDefault();
-  setAuthProgress(10);
-  setError('');
-  
-  try {
-    const { data, error } = await supabase.auth.signUp({
-      email: inputSignup.email,
-      password: inputSignup.password
-    });
 
-    if (data?.user) {
-      await fetch('/api/request-access', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: inputSignup.email,
-          name: inputSignup.email.split('@')[0]
-        })
-      });
-
-      // Progress bar berjalan (contoh doang)
-      let progress = 10;
-      const interval = setInterval(() => {
-        setAuthProgress((old) => {
-          const newProgress = old + 10;
-          if (newProgress >= 100) clearInterval(interval);
-          return newProgress;
-        });
-      }, 200); // << ✅ INI HARUS DITUTUP DENGAN SEMIKOLON
-    }
-  } catch (err) {
-    setError(err.message);
-    setAuthProgress(0);
-  }
-}; 5;
-          if (newProgress >= 100) {
-            clearInterval(interval);
-            setTimeout(() => {
-              if (error) {
-                setError(error.message);
-              } else {
-                setError('Wait for the admin to approve your registration!');
-                setAuthView('login');
-              }
-              setAuthProgress(0);
-            }, 500);
-            return 100;
-          }
-          return newProgress;
-        });
-      }, 200);
-    } catch (err) {
-      setError(err.message);
-      setAuthProgress(0);
-    }
-  };
 
   // Handle Logout
   const handleLogout = async () => {
