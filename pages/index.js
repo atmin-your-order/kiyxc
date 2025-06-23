@@ -122,25 +122,36 @@ export default function Home() {
 
   // Handle Signup
   const handleSignup = async (e) => {
-    e.preventDefault();
-    setAuthProgress(10);
-    setError('');
-    
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: inputSignup.email,
-        password: inputSignup.password
-      });
-      if (data?.user) {
-  await fetch('/api/request-access', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  e.preventDefault();
+  setAuthProgress(10);
+  setError('');
+
+  try {
+    const { data, error } = await supabase.auth.signUp({
       email: inputSignup.email,
-      name: inputSignup.email.split('@')[0]
-    })
-  });
-}
+      password: inputSignup.password
+    });
+
+    if (error) throw error;
+    setAuthProgress(50);
+
+    if (data?.user) {
+      const { error: insertError } = await supabase.from('users').insert([
+        {
+          email: inputSignup.email,
+          name: inputSignup.email.split('@')[0], // atau tambahkan field "username"
+          approved: false
+        }
+      ]);
+
+      if (insertError) throw insertError;
+      setAuthProgress(100);
+      alert('Berhasil daftar! Menunggu persetujuan admin.');
+    }
+  } catch (err) {
+    setError(err.message || 'Terjadi kesalahan.');
+  }
+};
 
       const interval = setInterval(() => {
         setAuthProgress(prev => {
