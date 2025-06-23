@@ -172,6 +172,17 @@ export default function Home() {
     setResult(null);
     setTypedResult('');
   };
+  //Handle Approve
+  const approve = async (email) => {
+  const res = await fetch('/api/approve-user', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  const data = await res.json();
+  if (data.success) alert('✅ Berhasil disetujui!');
+  else alert('❌ Gagal approve: ' + data.error);
+};
 
   // Handle Deploy
   const handleDeploy = async (e) => {
