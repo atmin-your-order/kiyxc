@@ -6,23 +6,33 @@ export default async function handler(req, res) {
 
   const { email, name } = req.body;
 
-  // 1. Simpan request ke database
-  const { error } = await supabase
-    .from('access_requests')
-    .insert([{ email, name }]);
+  console.log('[DEBUG] Email:', email);
+  console.log('[DEBUG] Name:', name);
 
-  if (error) {
-    return res.status(400).json({ error: 'Email sudah terdaftar' });
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ error: 'Email tidak valid' });
   }
 
-  // 2. Kirim notifikasi WhatsApp
-  const message = `📢 *REQUEST AKSS BARU*\n\nEmail: ${email}\nNama: ${name || '-'}\n\nSegera cek di dashboard admin!`;
-  const { success, sid } = await sendWhatsAppNotification(message);
+  try {
+    const { error } = await supabase
+      .from('access_requests')
+      .insert([{ email, name }]);
 
-  if (!success) {
-    // Fallback ke email jika WhatsApp gagal
-    await sendEmailFallback(email, name);
+    if (error) {
+      console.error('SUPABASE INSERT ERROR:', error.message);
+      return res.status(400).json({ error: error.message });
+    }
+
+    const message = `📢 *REQUEST AKSES BARU*\n\nEmail: ${email}\nNama: ${name || '-'}\n\nSegera cek di dashboard admin!`;
+    const { success, sid } = await sendWhatsAppNotification(message);
+
+    if (!success) {
+      await sendEmailFallback(email, name);
+    }
+
+    res.status(200).json({ success: true, sid });
+  } catch (err) {
+    console.error('UNEXPECTED ERROR:', err.message);
+    res.status(500).json({ error: err.message });
   }
-
-  res.status(200).json({ success: true, sid });
 }
