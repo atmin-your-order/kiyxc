@@ -169,9 +169,7 @@ const handleRequestAccess = async () => {
     const response = await fetch('/api/request-access', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        email: 'user@example.com', 
-        name: 'John Doe' 
+      body: JSON.stringify(form)
       })
     });
     
