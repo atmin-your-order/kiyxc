@@ -1,6 +1,6 @@
 import { supabase } from '../../lib/supabase';
 import { sendWhatsAppNotification } from '../../lib/notify';
-import { supabaseAdmin as supabase } from '../../lib/supabase-admin';
+import { supabaseAdmin } from '../../lib/supabase-admin';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
