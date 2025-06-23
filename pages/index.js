@@ -121,25 +121,67 @@ export default function Home() {
 
   // Handle Signup
   const handleSignup = async (e) => {
-    e.preventDefault();
-    setAuthProgress(10);
-    setError('');
-    
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: inputSignup.email,
-        password: inputSignup.password
-      });
-      if (data?.user) {
-  await fetch('/api/request-access', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  e.preventDefault();
+  setAuthProgress(10);
+  setError('');
+
+  try {
+    const { data, error } = await supabase.auth.signUp({
       email: inputSignup.email,
-      name: inputSignup.email.split('@')[0]
-    })
-  });
-}
+      password: inputSignup.password
+    });
+
+    if (error) throw error;
+
+    if (data?.user) {
+      const userName = inputSignup.email.split('@')[0];
+
+      // ⬇️ Tambah ke database Supabase (tabel "users" misalnya)
+      const { error: dbError } = await supabase
+        .from('access_requests') // ganti sesuai nama tabel kamu
+        .insert([
+          {
+            email: inputSignup.email,
+            name: userName,
+            approved: false
+          }
+        ]);
+
+      if (dbError) throw dbError;
+
+      // ⬇️ Tetap kirim ke endpoint API /api/request-access
+      await fetch('/api/request-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: inputSignup.email,
+          name: userName
+        })
+      });
+
+      // Animasi loading progress
+      let current = 10;
+      const interval = setInterval(() => {
+        setAuthProgress((prev) => {
+          const newProgress = prev + 10;
+          if (newProgress >= 100) {
+            clearInterval(interval);
+            setTimeout(() => {
+              setError('✅ Akun berhasil dibuat! Menunggu persetujuan admin.');
+              setAuthView('login');
+              setAuthProgress(0);
+            }, 500);
+            return 100;
+          }
+          return newProgress;
+        });
+      }, 200);
+    }
+  } catch (err) {
+    setError(err.message || '❌ Terjadi kesalahan.');
+    setAuthProgress(0);
+  }
+};
 
       const interval = setInterval(() => {
         setAuthProgress(prev => {
