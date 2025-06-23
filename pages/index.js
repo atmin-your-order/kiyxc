@@ -122,7 +122,7 @@ export default function Home() {
         password: inputSignup.password
       });
       if (data?.user) {
-  await fetch('/api/request-acces', {
+  await fetch('/api/request-access', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
