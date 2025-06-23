@@ -1,3 +1,4 @@
+import supabase from '../../lib/supabase-admin';
 import { sendWhatsAppNotification } from '../../lib/notify';
 
 export default async function handler(req, res) {
@@ -5,14 +6,38 @@ export default async function handler(req, res) {
 
   const { email, name } = req.body;
 
-  console.log('[DEBUG] Email:', email);
-  console.log('[DEBUG] Name:', name);
-
   if (!email || typeof email !== 'string') {
     return res.status(400).json({ error: 'Email tidak valid' });
   }
 
-  const message = `
+  try {
+    // Cek apakah email sudah pernah request sebelumnya
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (checkError) throw new Error(checkError.message);
+
+    if (existingUser) {
+      return res.status(409).json({ error: 'Email ini sudah pernah mendaftar.' });
+    }
+
+    // Simpan data ke database
+    const { data, error } = await supabase.from('users').insert([
+      {
+        email,
+        name: name || '',
+        approved: false,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+
+    if (error) throw new Error(error.message);
+
+    // Kirim notifikasi WA
+    const message = `
 📢 *PERMINTAAN AKSES BARU DITERIMA!*
 
 🔐 *Layanan:* Panel Web CPanel Premium
@@ -26,26 +51,21 @@ Jika pendaftar ini *BELUM MELAKUKAN PEMBAYARAN*,
 abaikan permintaan ini dan JANGAN BUATKAN AKUN PANEL.
 
 ✅ Jika SUDAH DIBAYAR:
-Silakan buat akun di panel dan kirimkan detail login seperti biasa.
-
-📌 *Abaikan pesan ini jika tidak relevan atau user tidak membeli.*
-🛡️ Ini adalah sistem verifikasi internal otomatis.
+Silakan buat akun di panel dan update statusnya menjadi *approved: true* di database.
 
 —
 🤖 *Sistem Otomatis Panel KIYXC*
 `;
 
-  try {
     const { success, sid } = await sendWhatsAppNotification(message);
 
-    if (!success) {
-      console.warn('Gagal kirim WA. Fallback email akan digunakan.');
-      await sendEmailFallback?.(email, name); // optional, if defined
-    }
-
-    res.status(200).json({ success: true, sid });
+    res.status(200).json({
+      success: true,
+      message: 'Permintaan akses berhasil dikirim!',
+      sid,
+    });
   } catch (err) {
-    console.error('UNEXPECTED ERROR:', err.message);
+    console.error('[ERROR]', err.message);
     res.status(500).json({ error: err.message });
   }
 }
