@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase clients
 import supabase from '../lib/supabase-client'
@@ -10,7 +9,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
   // You might want to throw an error or handle this case differently
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 export default function Home() {
   // === State ===
