@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase clients
-import { supabase, supabaseKey, supabaseUrl } from '../lib/supabase'
-const supabaseAdmin = createClient(
-  supabaseUrl, 
-  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
-);
+// Initialize Supabase clients
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 export default function Home() {
-  // === Existing State ===
+  // === State ===
   const [authView, setAuthView] = useState('login');
   const [session, setSession] = useState(null);
   const [inputLogin, setInputLogin] = useState({ email: '', password: '' });
@@ -24,62 +25,69 @@ export default function Home() {
   const [progress, setProgress] = useState(0);
   const [authProgress, setAuthProgress] = useState(0);
   
-  // === New State for Admin Features ===
-  const [unapprovedUsers, setUnapprovedUsers] = useState([]);
-  const [userApproved, setUserApproved] = useState(true);
-  const [showAdminPanel, setShowAdminPanel] = useState(false);
-  const [adminVerified, setAdminVerified] = useState(false);
-
-  // === Refs ===
+  // Refs
   const emailRef = useRef(null);
   const deployUsernameRef = useRef(null);
 
-  // === Admin Check ===
-  const isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-
-  // === New Functions for Admin Control ===
-  const fetchUnapprovedUsers = async () => {
-    const { data } = await supabaseAdmin
-      .from('users')
-      .select('id, email, created_at')
-      .eq('approved', false);
-    setUnapprovedUsers(data || []);
-  };
-
-  const approveUser = async (userId, email) => {
-    await supabaseAdmin
-      .from('users')
-      .update({ approved: true })
-      .eq('id', userId);
-    
-    fetchUnapprovedUsers();
-  };
-
-  const checkUserApproval = async (email) => {
-    const { data } = await supabase
-      .from('users')
-      .select('approved')
-      .eq('email', email)
-      .single();
-    
-    setUserApproved(data?.approved || false);
-    if (!data?.approved) {
-      await supabase.auth.signOut();
-      setError('Akun Anda belum disetujui admin!');
-    }
-  };
-
-  // === Existing Functions (Unchanged) ===
-  // Auto-focus saat login berhasil
+  // Check session and approval status
   useEffect(() => {
-    if (session && userApproved) {
+    const checkSessionAndApproval = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        const { data: requestData, error: requestError } = await supabaseAdmin
+          .from('access_requests')
+          .select('approved')
+          .eq('user_id', session.user.id)
+          .single();
+          
+        if (requestError || !requestData?.approved) {
+          await supabase.auth.signOut();
+          setSession(null);
+          setError('Akun Anda belum disetujui oleh admin. Silakan tunggu approval.');
+        } else {
+          setSession(session);
+        }
+      } else {
+        setSession(null);
+      }
+    };
+    
+    checkSessionAndApproval();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+        const { data: requestData, error: requestError } = await supabaseAdmin
+          .from('access_requests')
+          .select('approved')
+          .eq('user_id', session.user.id)
+          .single();
+          
+        if (requestError || !requestData?.approved) {
+          await supabase.auth.signOut();
+          setSession(null);
+          setError('Akun Anda belum disetujui oleh admin. Silakan tunggu approval.');
+        } else {
+          setSession(session);
+        }
+      } else {
+        setSession(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Auto-focus
+  useEffect(() => {
+    if (session) {
       deployUsernameRef.current?.focus();
     } else {
       emailRef.current?.focus();
     }
-  }, [session, userApproved]);
+  }, [session]);
 
-  // Reset form on successful auth
+  // Reset form on auth
   useEffect(() => {
     if (session) {
       setInputLogin({ email: '', password: '' });
@@ -87,7 +95,7 @@ export default function Home() {
     }
   }, [session]);
 
-  // Animasi Progress Bar (Auth)
+  // Progress bars
   useEffect(() => {
     if (authProgress > 0 && authProgress < 100) {
       const timer = setTimeout(() => {
@@ -97,7 +105,6 @@ export default function Home() {
     }
   }, [authProgress]);
 
-  // Animasi Progress Bar (Deploy)
   useEffect(() => {
     if (isLoading && progress < 100) {
       const timer = setTimeout(() => {
@@ -107,29 +114,38 @@ export default function Home() {
     }
   }, [isLoading, progress]);
 
-  // Handle Login
+  // Auth handlers
   const handleLogin = async (e) => {
     e.preventDefault();
     setAuthProgress(10);
     setError('');
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: inputLogin.email,
         password: inputLogin.password
       });
+
+      if (error) throw error;
+
+      // Check approval status
+      const { data: requestData, error: requestError } = await supabaseAdmin
+        .from('access_requests')
+        .select('approved')
+        .eq('user_id', data.user.id)
+        .single();
+        
+      if (requestError || !requestData?.approved) {
+        await supabase.auth.signOut();
+        throw new Error('Akun Anda belum disetujui oleh admin. Silakan tunggu approval.');
+      }
 
       const interval = setInterval(() => {
         setAuthProgress(prev => {
           const newProgress = prev + Math.random() * 15 + 5;
           if (newProgress >= 100) {
             clearInterval(interval);
-            setTimeout(() => {
-              if (error) {
-                setError(error.message);
-              }
-              setAuthProgress(0);
-            }, 500);
+            setAuthProgress(0);
             return 100;
           }
           return newProgress;
@@ -141,18 +157,35 @@ export default function Home() {
     }
   };
 
-  // Handle Signup
   const handleSignup = async (e) => {
     e.preventDefault();
     setAuthProgress(10);
     setError('');
     
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // 1. Sign up user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: inputSignup.email,
         password: inputSignup.password
       });
-      if (data?.user) {
+
+      if (authError) throw authError;
+
+      // 2. Add to access_requests table
+      if (authData.user) {
+        const { error: dbError } = await supabaseAdmin
+          .from('access_requests')
+          .insert([
+            {
+              user_id: authData.user.id,
+              email: inputSignup.email,
+              approved: false
+            }
+          ]);
+
+        if (dbError) throw dbError;
+
+        // 3. Notify admin
         await fetch('/api/request-access', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -169,12 +202,8 @@ export default function Home() {
           if (newProgress >= 100) {
             clearInterval(interval);
             setTimeout(() => {
-              if (error) {
-                setError(error.message);
-              } else {
-                setError('Wait for the admin to approve your registration!');
-                setAuthView('login');
-              }
+              setError('Pendaftaran berhasil! Tunggu approval dari admin.');
+              setAuthView('login');
               setAuthProgress(0);
             }, 500);
             return 100;
@@ -188,15 +217,13 @@ export default function Home() {
     }
   };
 
-  // Handle Logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setResult(null);
     setTypedResult('');
-    setShowAdminPanel(false);
   };
 
-  // Handle Deploy
+  // Deployment handler
   const handleDeploy = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -219,7 +246,7 @@ export default function Home() {
     }, 2500);
   };
 
-  // Typing Effect
+  // Typing effect
   useEffect(() => {
     if (result && isTyping) {
       const createdAt = new Date();
@@ -267,13 +294,13 @@ export default function Home() {
     }
   }, [result, isTyping]);
 
-  // Copy to Clipboard
+  // Copy to clipboard
   const copyToClipboard = () => {
     navigator.clipboard.writeText(typedResult);
     alert('✅ Berhasil disalin!');
   };
 
-  // Komponen Progress Bar
+  // Progress bar component
   const ProgressBar = ({ percentage, color }) => (
     <div style={{
       width: '100%',
@@ -293,49 +320,6 @@ export default function Home() {
     </div>
   );
 
-  // Admin Panel Component
-  const AdminPanel = () => (
-    <div style={{
-      background: 'rgba(0, 0, 0, 0.3)',
-      borderRadius: '15px',
-      padding: '1.5rem',
-      marginBottom: '1.5rem'
-    }}>
-      <h3 style={{ textAlign: 'center', marginBottom: '1rem' }}>Admin Panel - Pending Approvals</h3>
-      {unapprovedUsers.length === 0 ? (
-        <p style={{ textAlign: 'center' }}>No users waiting for approval</p>
-      ) : (
-        <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-          {unapprovedUsers.map(user => (
-            <div key={user.id} style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '10px',
-              marginBottom: '8px',
-              background: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px'
-            }}>
-              <span>{user.email}</span>
-              <button
-                onClick={() => approveUser(user.id, user.email)}
-                style={{
-                  padding: '5px 10px',
-                  background: 'linear-gradient(90deg, #4CAF50, #2E7D32)',
-                  border: 'none',
-                  borderRadius: '5px',
-                  color: 'white'
-                }}
-              >
-                Approve
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <div style={{
       minHeight: '100vh',
@@ -346,7 +330,6 @@ export default function Home() {
       fontFamily: "'Segoe UI', sans-serif",
       padding: '20px'
     }}>
-      {/* Global Styles */}
       <style jsx global>{`
         * {
           box-sizing: border-box;
@@ -370,7 +353,6 @@ export default function Home() {
         }
       `}</style>
 
-      {/* Main Container */}
       <div style={{
         width: '100%',
         maxWidth: '500px',
@@ -395,7 +377,6 @@ export default function Home() {
         </h1>
 
         {!session ? (
-          // Auth Forms (Login/Signup)
           <>
             <div style={{
               display: 'flex',
@@ -432,7 +413,6 @@ export default function Home() {
             </div>
 
             {authView === 'login' ? (
-              // Login Form
               <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div>
                   <input
@@ -508,7 +488,6 @@ export default function Home() {
                 {error && <p style={{ color: '#FF6B6B', textAlign: 'center', marginTop: '10px' }}>{error}</p>}
               </form>
             ) : (
-              // Signup Form
               <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div>
                   <input
@@ -585,7 +564,6 @@ export default function Home() {
             )}
           </>
         ) : (
-          // After Login
           <>
             <div style={{
               display: 'flex',
@@ -596,175 +574,104 @@ export default function Home() {
               <p style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
                 Logged in as: {session.user.email}
               </p>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                {isAdmin && (
-                  <button
-                    onClick={() => setShowAdminPanel(!showAdminPanel)}
-                    style={{
-                      padding: '8px 12px',
-                      background: showAdminPanel ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.1)',
-                      border: 'none',
-                      borderRadius: '8px',
-                      color: 'white',
-                      fontSize: '0.8rem'
-                    }}
-                  >
-                    {showAdminPanel ? 'Hide Admin' : 'Admin Panel'}
-                  </button>
-                )}
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    padding: '8px 12px',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    color: 'white',
-                    fontSize: '0.8rem'
-                  }}
-                >
-      Logout
-                </button>
-              </div>
+              <button
+                onClick={handleLogout}
+                style={{
+                  padding: '8px 12px',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: 'white',
+                  fontSize: '0.8rem'
+                }}
+              >
+                Logout
+              </button>
             </div>
 
-            {showAdminPanel && isAdmin && <AdminPanel />}
+            <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <input
+                ref={deployUsernameRef}
+                type="text"
+                placeholder="Username"
+                value={form.username}
+                onChange={(e) => setForm({...form, username: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '12px 15px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white'
+                }}
+                required
+                disabled={isLoading}
+              />
 
-            {(!isAdmin && !userApproved) ? (
-              <div style={{
-                textAlign: 'center',
-                padding: '20px',
-                background: 'rgba(0, 0, 0, 0.3)',
-                borderRadius: '10px'
-              }}>
-                <p>Akun Anda belum disetujui admin!</p>
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    padding: '10px 20px',
-                    marginTop: '15px',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    color: 'white'
-                  }}
-                >
-                  Kembali ke Login
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ position: 'relative' }}>
                 <input
-                  ref={deployUsernameRef}
-                  type="text"
-                  placeholder="Username"
-                  value={form.username}
-                  onChange={(e) => setForm({...form, username: e.target.value})}
+                  type="number"
+                  placeholder="RAM (0 = Unlimited)"
+                  value={form.ram}
+                  onChange={(e) => setForm({...form, ram: e.target.value})}
                   style={{
                     width: '100%',
                     padding: '12px 15px',
                     borderRadius: '10px',
                     border: 'none',
                     background: 'rgba(255, 255, 255, 0.2)',
-                    color: 'white'
+                    color: 'white',
+                    paddingRight: '50px'
                   }}
                   required
                   disabled={isLoading}
                 />
+                <span style={{
+                  position: 'absolute',
+                  right: '15px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'rgba(255, 255, 255, 0.7)'
+                }}>%</span>
+              </div>
 
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="number"
-                    placeholder="RAM (0 = Unlimited)"
-                    value={form.ram}
-                    onChange={(e) => setForm({...form, ram: e.target.value})}
-                    style={{
-                      width: '100%',
-                      padding: '12px 15px',
-                      borderRadius: '10px',
-                      border: 'none',
-                      background: 'rgba(255, 255, 255, 0.2)',
-                      color: 'white',
-                      paddingRight: '50px'
-                    }}
-                    required
-                    disabled={isLoading}
-                  />
-                  <span style={{
-                    position: 'absolute',
-                    right: '15px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'rgba(255, 255, 255, 0.7)'
-                  }}>GB</span>
-                </div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                style={{
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: isLoading 
+                    ? 'linear-gradient(90deg, #4B0082, #8A2BE2)'
+                    : 'linear-gradient(90deg, #8A2BE2, #4B0082)',
+                  color: 'white',
+                  fontWeight: '600',
+                  marginTop: '10px'
+                }}
+              >
+                {isLoading ? `Membuat Panel... ${progress}%` : 'Deploy Sekarang'}
+              </button>
 
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="number"
-                    placeholder="CPU (0 = Unlimited)"
-                    value={form.cpu}
-                    onChange={(e) => setForm({...form, cpu: e.target.value})}
-                    style={{
-                      width: '100%',
-                      padding: '12px 15px',
-                      borderRadius: '10px',
-                      border: 'none',
-                      background: 'rgba(255, 255, 255, 0.2)',
-                      color: 'white',
-                      paddingRight: '50px'
-                    }}
-                    required
-                    disabled={isLoading}
-                  />
-                  <span style={{
-                    position: 'absolute',
-                    right: '15px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'rgba(255, 255, 255, 0.7)'
-                  }}>%</span>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  style={{
-                    padding: '12px',
-                    borderRadius: '10px',
-                    border: 'none',
-                    background: isLoading 
-                      ? 'linear-gradient(90deg, #4B0082, #8A2BE2)'
-                      : 'linear-gradient(90deg, #8A2BE2, #4B0082)',
-                    color: 'white',
-                    fontWeight: '600',
-                    marginTop: '10px'
-                  }}
-                >
-                  {isLoading ? `Membuat Panel... ${progress}%` : 'Deploy Sekarang'}
-                </button>
-
-                {isLoading && (
-                  <>
-                    <ProgressBar percentage={progress} />
-                    <p style={{ 
-                      textAlign: 'center', 
-                      fontSize: '0.9rem',
-                      color: 'rgba(255, 255, 255, 0.8)'
-                    }}>
-                      {progress < 30 && 'Menginisialisasi server...'}
-                      {progress >= 30 && progress < 70 && 'Mengalokasikan resource...'}
-                      {progress >= 70 && progress < 100 && 'Menyelesaikan konfigurasi...'}
-                      {progress === 100 && 'Selesai!'}
-                    </p>
-                  </>
-                )}
-              </form>
-            )}
+              {isLoading && (
+                <>
+                  <ProgressBar percentage={progress} />
+                  <p style={{ 
+                    textAlign: 'center', 
+                    fontSize: '0.9rem',
+                    color: 'rgba(255, 255, 255, 0.8)'
+                  }}>
+                    {progress < 30 && 'Menginisialisasi server...'}
+                    {progress >= 30 && progress < 70 && 'Mengalokasikan resource...'}
+                    {progress >= 70 && progress < 100 && 'Menyelesaikan konfigurasi...'}
+                    {progress === 100 && 'Selesai!'}
+                  </p>
+                </>
+              )}
+            </form>
           </>
         )}
 
-        {/* Hasil Output */}
         {typedResult && (
           <div style={{
             marginTop: '2rem',
@@ -808,3 +715,4 @@ export default function Home() {
     </div>
   );
 }
+          
