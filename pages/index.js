@@ -4,10 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import supabase from '../lib/supabase-client'
 
 // Add validation
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase credentials are missing!');
-  // You might want to throw an error or handle this case differently
-}
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 export default function Home() {
