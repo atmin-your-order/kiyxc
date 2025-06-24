@@ -5,7 +5,6 @@ import supabase from '../lib/supabase-client'
 
 // Add validation
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 export default function Home() {
   // === State ===
   const [authView, setAuthView] = useState('login');
