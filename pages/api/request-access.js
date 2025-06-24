@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     // Simpan data ke database
     const { data, error } = await supabase.from('access_requests').insert([
   {
-    user_id: crypto.randomUUID(), // ← tambahkan ini
+    user_id: user_id, // ← tambahkan ini
     email,
     name: name || '',
     status: 'pending',            // ← tambahkan ini
