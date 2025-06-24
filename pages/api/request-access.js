@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   const { userId, email, name } = req.body;
 
   // Gunakan supabaseAdmin untuk bypass RLS
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await supabase
     .from('access_requests')
     .insert([{ 
       user_id: userId, 
