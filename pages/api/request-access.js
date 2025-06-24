@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   try {
     // Cek apakah email sudah pernah request sebelumnya
     const { data: existingUser, error: checkError } = await supabase
-      .from('access-requests')
+      .from('access_requests')
       .select('user_id')
       .eq('email', email)
       .maybeSingle();
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     }
 
     // Simpan data ke database
-    const { data, error } = await supabase.from('access-requests').insert([
+    const { data, error } = await supabase.from('access_requests').insert([
       {
         email,
         name: name || '',
