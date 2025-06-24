@@ -37,6 +37,22 @@ export default function Home() {
   const emailRef = useRef(null);
   const deployUsernameRef = useRef(null);
 
+  //server-side
+  const handleSubmit = async () => {
+    const res = await fetch('/api/access-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, reason }),
+    });
+
+    const json = await res.json();
+    if (res.ok) {
+      setStatus('✅ Berhasil dikirim!');
+    } else {
+      setStatus(`❌ Gagal: ${json.error}`);
+    }
+  };
+
   // Check session and approval status
  useEffect(() => {
   const checkSessionAndApproval = async () => {
