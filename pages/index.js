@@ -177,19 +177,6 @@ const handleSignup = async (e) => {
       }
     }
 
-    // Tampilkan sukses
-    setAuthProgress(100);
-    setTimeout(() => {
-      setError('🎉 Pendaftaran berhasil! Tunggu approval admin.');
-      setAuthView('login');
-      setAuthProgress(0);
-    }, 1000);
-  } catch (err) {
-    setError(err.message);
-    setAuthProgress(0);
-  }
-};
-
     // 3. Simulasi loading + notifikasi
     const interval = setInterval(() => {
       setAuthProgress(prev => {
