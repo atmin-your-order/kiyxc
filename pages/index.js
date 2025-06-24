@@ -45,46 +45,12 @@ export default function Home() {
   };
 
   // Check session and approval status
- useEffect(() => {
-  const checkSessionAndApproval = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (session) {
-      try {
-        const res = await fetch('/api/check-approval', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: session.user.id }),
-        });
-
-        const result = await res.json();
-
-        if (!result?.approved) {
-          await supabase.auth.signOut();
-          setSession(null);
-          setError('Akun Anda belum disetujui oleh admin. Silakan tunggu approval.');
-        } else {
-          setSession(session);
-        }
-      } catch (err) {
-        console.error(err);
-        await supabase.auth.signOut();
-        setSession(null);
-        setError('Terjadi kesalahan saat memeriksa status akun.');
-      }
-    } else {
-      setSession(null);
-    }
-  };
-
-  checkSessionAndApproval();
-
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, _session) => {
-    await checkSessionAndApproval();
-  });
-
-  return () => subscription.unsubscribe();
-}, []);
+const res = await fetch('/api/check-approval', {
+  method: 'POST',
+  body: JSON.stringify({ user_id: user.id }),
+  headers: { 'Content-Type': 'application/json' },
+});
+const { approved } = await res.json();
 
   // Auto-focus
   useEffect(() => {
