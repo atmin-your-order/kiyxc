@@ -35,53 +35,46 @@ export default function Home() {
   const deployUsernameRef = useRef(null);
 
   // Check session and approval status
-  useEffect(() => {
-    const checkSessionAndApproval = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        const { data: requestData, error: requestError } = await supabaseAdmin
-          .from('access_requests')
-          .select('approved')
-          .eq('user_id', session.user.id)
-          .single();
-          
-        if (requestError || !requestData?.approved) {
+ useEffect(() => {
+  const checkSessionAndApproval = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session) {
+      try {
+        const res = await fetch('/api/check-approval', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: session.user.id }),
+        });
+
+        const result = await res.json();
+
+        if (!result?.approved) {
           await supabase.auth.signOut();
           setSession(null);
           setError('Akun Anda belum disetujui oleh admin. Silakan tunggu approval.');
         } else {
           setSession(session);
         }
-      } else {
+      } catch (err) {
+        console.error(err);
+        await supabase.auth.signOut();
         setSession(null);
+        setError('Terjadi kesalahan saat memeriksa status akun.');
       }
-    };
-    
-    checkSessionAndApproval();
+    } else {
+      setSession(null);
+    }
+  };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session) {
-        const { data: requestData, error: requestError } = await supabaseAdmin
-          .from('access_requests')
-          .select('approved')
-          .eq('user_id', session.user.id)
-          .single();
-          
-        if (requestError || !requestData?.approved) {
-          await supabase.auth.signOut();
-          setSession(null);
-          setError('Akun Anda belum disetujui oleh admin. Silakan tunggu approval.');
-        } else {
-          setSession(session);
-        }
-      } else {
-        setSession(null);
-      }
-    });
+  checkSessionAndApproval();
 
-    return () => subscription.unsubscribe();
-  }, []);
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, _session) => {
+    await checkSessionAndApproval();
+  });
+
+  return () => subscription.unsubscribe();
+}, []);
 
   // Auto-focus
   useEffect(() => {
