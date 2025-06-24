@@ -373,6 +373,10 @@ export default function Home() {
         border: '1px solid rgba(255, 255, 255, 0.1)',
         color: 'white'
       }}>
+     <input placeholder="Username" onChange={(e) => setUsername(e.target.value)} />
+      <input placeholder="Alasan" onChange={(e) => setReason(e.target.value)} />
+      <button onClick={handleSubmit}>Kirim</button>
+      <p>{status}</p>
         <h1 style={{
           textAlign: 'center',
           marginBottom: '2rem',
