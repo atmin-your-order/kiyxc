@@ -23,6 +23,7 @@ export default function Home() {
   const [username, setUsername] = useState('');
   const [reason, setReason] = useState('');
   const [status, setStatus] = useState('');
+  const [approved, setApproved] = useState(null)
   
   // Refs
   const emailRef = useRef(null);
@@ -45,13 +46,27 @@ export default function Home() {
   };
 
   // Check session and approval status
-const res = await fetch('/api/check-approval', {
-  method: 'POST',
-  body: JSON.stringify({ user_id: user.id }),
-  headers: { 'Content-Type': 'application/json' },
-});
-const { approved } = await res.json();
+useEffect(() => {
+    const checkApproval = async () => {
+      try {
+        const res = await fetch('/api/check-approval', {
+          method: 'POST',
+          body: JSON.stringify({ user_id: 'user-id-di-sini' }),
+          headers: { 'Content-Type': 'application/json' },
+        })
+        const { approved } = await res.json()
+        setApproved(approved)
 
+        if (!approved) {
+          alert('Akun belum disetujui')
+        }
+      } catch (err) {
+        console.error('Error cek approval:', err)
+      }
+    }
+
+    checkApproval()
+  }, [])
   // Auto-focus
   useEffect(() => {
     if (session) {
