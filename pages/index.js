@@ -167,7 +167,8 @@ const handleSignup = async (e) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: authData.user.id,
-          email: inputSignup.email
+          email: inputSignup.email,
+          name: name
         })
       });
 
