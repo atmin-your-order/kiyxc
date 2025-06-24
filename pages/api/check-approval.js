@@ -1,6 +1,6 @@
 // /pages/api/check-approval.js
 import { createClient } from '@supabase/supabase-js';
-import { supabaseAdmin } from '../lib/supabase-admin';
+import { supabaseAdmin } from '../../lib/supabase-admin';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
