@@ -1,54 +1,26 @@
-import supabase from '../../lib/supabase-admin';
+import { supabaseAdmin } from '../../lib/supabase-admin'
 import { sendWhatsAppNotification } from '../../lib/notify';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end();
+  const { userId, email, name } = req.body;
 
-  const { email, name } = req.body;
+  // Gunakan supabaseAdmin untuk bypass RLS
+  const { data, error } = await supabaseAdmin
+    .from('access_requests')
+    .insert([{ 
+      user_id: userId, 
+      email, 
+      name,
+      approved: false // default status
+    }]);
 
-  if (!email || typeof email !== 'string') {
-    return res.status(400).json({ error: 'Email tidak valid' });
+  if (error) {
+    console.error('Error inserting access request:', error);
+    return res.status(500).json({ error: error.message });
   }
 
-  try {
-    // Cek apakah email sudah pernah request sebelumnya
-    const { data: existingUser, error: checkError } = await supabase
-      .from('access_requests')
-      .select('user_id')
-      .eq('email', email)
-      .maybeSingle();
+  // Kirim notifikasi ke admin (contoh via email)
+  const { success, sid } = await sendWhatsAppNotification;
 
-    if (checkError) throw new Error(checkError.message);
-
-    if (existingUser) {
-      return res.status(409).json({ error: 'Email ini sudah pernah mendaftar.' });
-    }
-
-    // Simpan data ke database
-    const { data, error } = await supabase.from('access_requests').insert([
-  {
-    user_id: user_id, // ← tambahkan ini
-    email,
-    name: name || '',
-    status: 'pending',            // ← tambahkan ini
-    approved: false,
-    created_at: new Date().toISOString(),
-    expires_at: null,            // ← tambahkan ini (optional)
-  },
-]);
-
-    if (error) throw new Error(error.message);
-
-    // Kirim notifikasi WA
-    const { success, sid } = await sendWhatsAppNotification;
-
-    res.status(200).json({
-      success: true,
-      message: 'Permintaan akses berhasil dikirim!',
-      sid,
-    });
-  } catch (err) {
-    console.error('[ERROR]', err.message);
-    res.status(500).json({ error: err.message });
-  }
+  res.status(200).json({ success: true });
 }
