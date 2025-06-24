@@ -40,27 +40,7 @@ export default async function handler(req, res) {
     if (error) throw new Error(error.message);
 
     // Kirim notifikasi WA
-    const message = `
-📢 *PERMINTAAN AKSES BARU DITERIMA!*
-
-🔐 *Layanan:* Panel Web CPanel Premium
-📧 *Email:* ${email}
-👤 *Nama:* ${name || '-'}
-
-📝 Pendaftar ini telah mengisi formulir akses panel CPanel.
-
-⚠️ *PERHATIAN ADMIN!*
-Jika pendaftar ini *BELUM MELAKUKAN PEMBAYARAN*, 
-abaikan permintaan ini dan JANGAN BUATKAN AKUN PANEL.
-
-✅ Jika SUDAH DIBAYAR:
-Silakan buat akun di panel dan update statusnya menjadi *approved: true* di database.
-
-—
-🤖 *Sistem Otomatis Panel KIYXC*
-`;
-
-    const { success, sid } = await sendWhatsAppNotification(message);
+    const { success, sid } = await sendWhatsAppNotification;
 
     res.status(200).json({
       success: true,
