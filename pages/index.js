@@ -29,6 +29,9 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [authProgress, setAuthProgress] = useState(0);
+  const [username, setUsername] = useState('');
+  const [reason, setReason] = useState('');
+  const [status, setStatus] = useState('');
   
   // Refs
   const emailRef = useRef(null);
