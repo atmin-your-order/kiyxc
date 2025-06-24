@@ -146,36 +146,49 @@ useEffect(() => {
     }
   };
 
-  const handleSignup = async (e) => {
+const handleSignup = async (e) => {
   e.preventDefault();
   setAuthProgress(10);
   setError('');
 
-try {
-       const { data: authData, error: authError } = await supabase.auth.signUp({
-         email: inputSignup.email,
-         password: inputSignup.password
-       });
+  try {
+    // Sign up hanya dengan email dan password
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: inputSignup.email,
+      password: inputSignup.password
+    });
 
-       if (authError) throw authError;
+    if (authError) throw authError;
 
-       // Hanya kirim request jika user berhasil dibuat
-       if (authData.user) {
-         const res = await fetch('/api/request-access', {
-           method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({
-  userId: authData.user.id,
-  email: inputSignup.email,
-  name: inputSignup.email.split('@')[0]   // <-- inisialisasi name dari email
-})
-         });
+    // Kirim permintaan akses tanpa username
+    if (authData.user) {
+      const res = await fetch('/api/request-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: authData.user.id,
+          email: inputSignup.email
+        })
+      });
 
-         if (!res.ok) {
-           const errorData = await res.json();
-           throw new Error(errorData.error || 'Failed to request access');
-         }
-       }
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Gagal mengirim permintaan akses');
+      }
+    }
+
+    // Tampilkan sukses
+    setAuthProgress(100);
+    setTimeout(() => {
+      setError('🎉 Pendaftaran berhasil! Tunggu approval admin.');
+      setAuthView('login');
+      setAuthProgress(0);
+    }, 1000);
+  } catch (err) {
+    setError(err.message);
+    setAuthProgress(0);
+  }
+};
 
     // 3. Simulasi loading + notifikasi
     const interval = setInterval(() => {
