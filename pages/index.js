@@ -156,65 +156,57 @@ export default function Home() {
   };
 
   const handleSignup = async (e) => {
-    e.preventDefault();
-    setAuthProgress(10);
-    setError('');
-    
-    try {
-      // 1. Sign up user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: inputSignup.email,
-        password: inputSignup.password
+  e.preventDefault();
+  setAuthProgress(10);
+  setError('');
+
+  try {
+    // 1. Sign up user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: inputSignup.email,
+      password: inputSignup.password
+    });
+
+    if (authError) throw authError;
+
+    // 2. Panggil API request-access untuk insert + notifikasi
+    if (authData.user) {
+      const res = await fetch('/api/request-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: authData.user.id,
+          email: inputSignup.email,
+          name: inputSignup.email.split('@')[0]
+        })
       });
 
-      if (authError) throw authError;
-
-      // 2. Add to access_requests table
-      if (authData.user) {
-        const { error: dbError } = await supabaseAdmin
-          .from('access_requests')
-          .insert([
-            {
-              user_id: authData.user.id,
-              email: inputSignup.email,
-              approved: false
-            }
-          ]);
-
-        if (dbError) throw dbError;
-
-        // 3. Notify admin
-        await fetch('/api/request-access', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: inputSignup.email,
-            name: inputSignup.email.split('@')[0]
-          })
-        });
-      }
-
-      const interval = setInterval(() => {
-        setAuthProgress(prev => {
-          const newProgress = prev + Math.random() * 15 + 5;
-          if (newProgress >= 100) {
-            clearInterval(interval);
-            setTimeout(() => {
-              setError('Pendaftaran berhasil! Tunggu approval dari admin.');
-              setAuthView('login');
-              setAuthProgress(0);
-            }, 500);
-            return 100;
-          }
-          return newProgress;
-        });
-      }, 200);
-    } catch (err) {
-      setError(err.message);
-      setAuthProgress(0);
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Gagal mendaftarkan akses.');
     }
-  };
 
+    // 3. Simulasi loading + notifikasi
+    const interval = setInterval(() => {
+      setAuthProgress(prev => {
+        const newProgress = prev + Math.random() * 15 + 5;
+        if (newProgress >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setError('Pendaftaran berhasil! Tunggu approval dari admin.');
+            setAuthView('login');
+            setAuthProgress(0);
+          }, 500);
+          return 100;
+        }
+        return newProgress;
+      });
+    }, 200);
+  } catch (err) {
+    setError(err.message);
+    setAuthProgress(0);
+  }
+};
+  
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setResult(null);
