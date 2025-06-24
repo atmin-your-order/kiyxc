@@ -1,4 +1,4 @@
-import supabase from '../lib/supabase-admin'
+import supabase from '../../lib/supabase-admin'
 
 export default async function handler(req, res) {
   console.log('Using service_role:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Yes' : 'No');
