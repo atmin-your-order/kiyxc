@@ -2,13 +2,18 @@ import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase clients
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabaseServiceRoleKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseServiceRoleKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || '';
+
+// Add validation
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Supabase credentials are missing!');
+  // You might want to throw an error or handle this case differently
+}
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
-
 export default function Home() {
   // === State ===
   const [authView, setAuthView] = useState('login');
