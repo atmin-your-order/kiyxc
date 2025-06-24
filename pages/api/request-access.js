@@ -26,13 +26,16 @@ export default async function handler(req, res) {
 
     // Simpan data ke database
     const { data, error } = await supabase.from('access_requests').insert([
-      {
-        email,
-        name: name || '',
-        approved: false,
-        created_at: new Date().toISOString(),
-      },
-    ]);
+  {
+    user_id: crypto.randomUUID(), // ← tambahkan ini
+    email,
+    name: name || '',
+    status: 'pending',            // ← tambahkan ini
+    approved: false,
+    created_at: new Date().toISOString(),
+    expires_at: null,            // ← tambahkan ini (optional)
+  },
+]);
 
     if (error) throw new Error(error.message);
 
