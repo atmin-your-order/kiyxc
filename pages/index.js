@@ -151,30 +151,31 @@ useEffect(() => {
   setAuthProgress(10);
   setError('');
 
-  try {
-    // 1. Sign up user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: inputSignup.email,
-      password: inputSignup.password
-    });
+try {
+       const { data: authData, error: authError } = await supabase.auth.signUp({
+         email: inputSignup.email,
+         password: inputSignup.password
+       });
 
-    if (authError) throw authError;
+       if (authError) throw authError;
 
-    // 2. Panggil API request-access untuk insert + notifikasi
-    if (authData.user) {
-      const res = await fetch('/api/request-access', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: authData.user.id,
-          email: inputSignup.email,
-          name: inputSignup.email.split('@')[0]
-        })
-      });
+       // Hanya kirim request jika user berhasil dibuat
+       if (authData.user) {
+         const res = await fetch('/api/request-access', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+             userId: authData.user.id,
+             email: inputSignup.email,
+             name: inputSignup.email.split('@')[0]
+           })
+         });
 
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Gagal mendaftarkan akses.');
-    }
+         if (!res.ok) {
+           const errorData = await res.json();
+           throw new Error(errorData.error || 'Failed to request access');
+         }
+       }
 
     // 3. Simulasi loading + notifikasi
     const interval = setInterval(() => {
