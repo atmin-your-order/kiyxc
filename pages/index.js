@@ -165,10 +165,10 @@ try {
            method: 'POST',
            headers: { 'Content-Type': 'application/json' },
            body: JSON.stringify({
-             userId: authData.user.id,
-             email: inputSignup.email,
-             name: inputSignup.email.split('@')[0]
-           })
+  userId: authData.user.id,
+  email: inputSignup.email,
+  name: inputSignup.email.split('@')[0]   // <-- inisialisasi name dari email
+})
          });
 
          if (!res.ok) {
