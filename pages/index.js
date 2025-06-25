@@ -105,98 +105,85 @@ useEffect(() => {
 
   // Auth handlers
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setAuthProgress(10);
-    setError('');
-    
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: inputLogin.email,
-        password: inputLogin.password
-      });
+  e.preventDefault();
+  setAuthProgress(10);
+  setError('');
+  
+  try {
+    // 1. Login dengan supabase client biasa
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: inputLogin.email,
+      password: inputLogin.password
+    });
 
-      if (error) throw error;
+    if (error) throw error;
 
-      // Check approval status
-      const { data: requestData, error: requestError } = await supabaseAdmin
-        .from('access_requests')
-        .select('approved')
-        .eq('user_id', data.user.id)
-        .single();
-        
-      if (requestError || !requestData?.approved) {
-        await supabase.auth.signOut();
-        throw new Error('Akun Anda belum disetujui oleh admin. Silakan tunggu approval.');
-      }
+    // 2. Cek approval status via API route
+    const response = await fetch('/api/auth/check-approval', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: data.user.id })
+    });
 
-      const interval = setInterval(() => {
-        setAuthProgress(prev => {
-          const newProgress = prev + Math.random() * 15 + 5;
-          if (newProgress >= 100) {
-            clearInterval(interval);
-            setAuthProgress(0);
-            return 100;
-          }
-          return newProgress;
-        });
-      }, 200);
-    } catch (err) {
-      setError(err.message);
-      setAuthProgress(0);
+    const result = await response.json();
+
+    if (!response.ok || !result.approved) {
+      await supabase.auth.signOut();
+      throw new Error('Akun Anda belum disetujui oleh admin.');
     }
-  };
 
+    // Progress animation
+    const interval = setInterval(() => {
+      setAuthProgress(prev => {
+        const newProgress = prev + 15;
+        if (newProgress >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return newProgress;
+      });
+    }, 200);
+    
+  } catch (err) {
+    setError(err.message);
+    setAuthProgress(0);
+  }
+};
+//habdle signup
 const handleSignup = async (e) => {
   e.preventDefault();
   setAuthProgress(10);
   setError('');
 
   try {
-    // Sign up hanya dengan email dan password
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: inputSignup.email,
-      password: inputSignup.password
+    // Kirim request ke API route yang aman
+    const response = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: inputSignup.email,
+        password: inputSignup.password
+      }),
     });
 
-    if (authError) throw authError;
+    const result = await response.json();
 
-    // Kirim permintaan akses tanpa username
-    if (authData.user) {
-      const res = await fetch('/api/request-access', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: authData.user.id,
-          email: inputSignup.email,
-          name: name
-        })
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Gagal mengirim permintaan akses');
-      }
+    if (!response.ok) {
+      throw new Error(result.error || 'Signup failed');
     }
 
-    // 3. Simulasi loading + notifikasi
-    const interval = setInterval(() => {
-      setAuthProgress(prev => {
-        const newProgress = prev + Math.random() * 15 + 5;
-        if (newProgress >= 100) {
-          clearInterval(interval);
-          setTimeout(() => {
-            setError('Pendaftaran berhasil! Tunggu approval dari admin.');
-            setAuthView('login');
-            setAuthProgress(0);
-          }, 500);
-          return 100;
-        }
-        return newProgress;
-      });
-    }, 200);
+    // Tampilkan sukses
+    setAuthProgress(100);
+    setTimeout(() => {
+      setError('🎉 Pendaftaran berhasil! Tunggu approval admin.');
+      setAuthView('login');
+      setAuthProgress(0);
+    }, 1000);
+    
   } catch (err) {
     setError(err.message);
     setAuthProgress(0);
+    console.error('Signup error:', err);
   }
 };
   
