@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     }
 
     // 4. Cek status approval (contoh)
-    const { data: approvalData, error: approvalError } = await supabase
+    const { data: approvalData, error: approvalError } = await supabaseAdmin
       .from('access_requests')
       .select('approved')
       .eq('user_id', data.user.id)
