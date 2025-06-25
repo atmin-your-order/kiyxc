@@ -49,7 +49,7 @@ export default function Home() {
 useEffect(() => {
     const checkApproval = async () => {
       try {
-        const res = await fetch('/api/check-approval', {
+        const res = await fetch('/api/auth/check-approval', {
           method: 'POST',
           body: JSON.stringify({ user_id: 'user-id-di-sini' }),
           headers: { 'Content-Type': 'application/json' },
