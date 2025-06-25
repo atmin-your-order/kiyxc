@@ -106,8 +106,11 @@ useEffect(() => {
   // Auth handlers
   const handleLogin = async (e) => {
   e.preventDefault();
-  
+  setError('');
+  setAuthProgress(10);
+
   try {
+    // 1. Kirim request ke API route
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -119,20 +122,29 @@ useEffect(() => {
 
     const result = await response.json();
 
+    // 2. Handle error response
     if (!response.ok) {
       throw new Error(result.error || 'Login failed');
     }
 
-    // Set session di client
-    const { data, error } = await supabase.auth.setSession(result.session);
-    
-    if (error) throw error;
+    // 3. Set session di client
+    const { error: sessionError } = await supabase.auth.setSession(result.session);
+    if (sessionError) throw sessionError;
 
-    // Redirect atau update UI
-    router.push('/dashboard');
-    
+    // 4. Update UI
+    setAuthProgress(100);
+    setTimeout(() => {
+      router.push('/dashboard');
+    }, 1000);
+
   } catch (error) {
+    setAuthProgress(0);
     setError(error.message);
+    
+    // Handle specific error codes
+    if (error.code === 'ACCOUNT_PENDING_APPROVAL') {
+      setError('Akun Anda belum disetujui admin');
+    }
   }
 };
 //habdle signup
