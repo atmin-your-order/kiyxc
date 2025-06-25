@@ -106,47 +106,33 @@ useEffect(() => {
   // Auth handlers
   const handleLogin = async (e) => {
   e.preventDefault();
-  setAuthProgress(10);
-  setError('');
   
   try {
-    // 1. Login dengan supabase client biasa
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: inputLogin.email,
-      password: inputLogin.password
-    });
-
-    if (error) throw error;
-
-    // 2. Cek approval status via API route
-    const response = await fetch('/api/auth/check-approval', {
+    const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: data.user.id })
+      body: JSON.stringify({
+        email: inputLogin.email,
+        password: inputLogin.password
+      }),
     });
 
     const result = await response.json();
 
-    if (!response.ok || !result.approved) {
-      await supabase.auth.signOut();
-      throw new Error('Akun Anda belum disetujui oleh admin.');
+    if (!response.ok) {
+      throw new Error(result.error || 'Login failed');
     }
 
-    // Progress animation
-    const interval = setInterval(() => {
-      setAuthProgress(prev => {
-        const newProgress = prev + 15;
-        if (newProgress >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return newProgress;
-      });
-    }, 200);
+    // Set session di client
+    const { data, error } = await supabase.auth.setSession(result.session);
     
-  } catch (err) {
-    setError(err.message);
-    setAuthProgress(0);
+    if (error) throw error;
+
+    // Redirect atau update UI
+    router.push('/dashboard');
+    
+  } catch (error) {
+    setError(error.message);
   }
 };
 //habdle signup
