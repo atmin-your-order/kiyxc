@@ -14,7 +14,7 @@ export default function Home() {
   const [progress, setProgress] = useState(0);
   const [loginProgress, setLoginProgress] = useState(0);
 
-  // Reset form on successful login
+  // Reset form on successful logins
   useEffect(() => {
     if (login) {
       setInputLogin({ username: '', password: '' });
