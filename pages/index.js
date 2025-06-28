@@ -34,7 +34,7 @@ export default function Home() {
 
   // Deployment progress animation
   useEffect(() => {
-    if (isLoading && progress  100) {
+    if (isLoading && progress < 100) {
       const timer = setTimeout(() => {
         const randomIncrement = Math.floor(Math.random() * 10) + 1;
         setProgress(prev => Math.min(prev + randomIncrement, 100));
