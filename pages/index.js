@@ -145,7 +145,7 @@ export default function Home() {
       div style={{ 
         display: 'flex', 
         width: '100%',
-        margin: '10px 0',
+        margin: '10px',
         background: 'rgba(0,0,0,0.1)',
         borderRadius: '10px',
         overflow: 'hidden'
