@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const users = [
-  ['admin123', 'kiyy'],
-  ['testpass', 'tester']
-];
+const users = JSON.parse(process.env.NEXT_PUBLIC_USERS || '[]');
 
 export default function Home() {
   const [login, setLogin] = useState(false);
