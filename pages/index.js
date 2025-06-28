@@ -618,7 +618,7 @@ export default function Home() {
                 border: 'none',
                 background: 'rgba(255, 255, 255, 0.2)',
                 color: 'white',
-                marginTop: '15px,
+                marginTop: '15px',
                 width: '100%',
                 fontWeight: '600',
                 backdropFilter: 'blur(5px)'
