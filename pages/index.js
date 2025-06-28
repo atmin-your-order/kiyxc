@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 
-const users = [
-  ['fullpower', 'kiyy'],
-  ['amane01', 'amane']
-];
+// Users sekarang diambil dari environment variable
+const users = JSON.parse(process.env.NEXT_PUBLIC_USERS || '[]');
 
 export default function Home() {
   // === State ===
   const [login, setLogin] = useState(false);
+  const [showSignup, setShowSignup] = useState(false); // State untuk toggle signup form
   const [inputLogin, setInputLogin] = useState({ username: '', password: '' });
+  const [signupData, setSignupData] = useState({ username: '', password: '' }); // State untuk signup form
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ username: '', ram: '', cpu: '' });
   const [result, setResult] = useState(null);
@@ -18,19 +18,23 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [loginProgress, setLoginProgress] = useState(0);
+  const [signupSuccess, setSignupSuccess] = useState(false);
   
   // Refs untuk auto-focus
   const usernameRef = useRef(null);
   const deployUsernameRef = useRef(null);
+  const signupUsernameRef = useRef(null);
 
-  // Auto-focus saat login berhasil
+  // Auto-focus saat login berhasil atau form berubah
   useEffect(() => {
     if (login) {
       deployUsernameRef.current?.focus();
+    } else if (showSignup) {
+      signupUsernameRef.current?.focus();
     } else {
       usernameRef.current?.focus();
     }
-  }, [login]);
+  }, [login, showSignup]);
 
   // Reset form on successful login
   useEffect(() => {
@@ -87,6 +91,41 @@ export default function Home() {
         return newProgress;
       });
     }, 200);
+  };
+
+  // Handle Signup
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      // Kirim data signup ke API untuk notifikasi WhatsApp
+      const res = await fetch('/api/signup-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: signupData.username,
+          password: signupData.password,
+          timestamp: new Date().toISOString()
+        })
+      });
+      
+      if (res.ok) {
+        setSignupSuccess(true);
+        setShowSignup(false);
+        // Reset form
+        setSignupData({ username: '', password: '' });
+        
+        // Simpan data sementara (ini hanya contoh, di production seharusnya disimpan di database)
+        users.push([signupData.password, signupData.username]);
+      } else {
+        setError('Gagal mengirim permintaan signup');
+      }
+    } catch (err) {
+      setError('Terjadi kesalahan saat signup');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Handle Deploy (TIDAK DIUBAH UNTUK JAGA API)
@@ -218,6 +257,18 @@ export default function Home() {
           opacity: 0.7;
           cursor: not-allowed;
         }
+        .toggle-form {
+          background: none;
+          border: none;
+          color: rgba(255, 255, 255, 0.7);
+          text-decoration: underline;
+          margin-top: 10px;
+          font-size: 0.9rem;
+          cursor: pointer;
+        }
+        .toggle-form:hover {
+          color: white;
+        }
       `}</style>
 
       {/* Main Container */}
@@ -245,81 +296,187 @@ export default function Home() {
         </h1>
 
         {!login ? (
-          // Login Form
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div>
-              <input
-                ref={usernameRef}
-                type="text"
-                placeholder="Username"
-                value={inputLogin.username}
-                onChange={(e) => setInputLogin({...inputLogin, username: e.target.value})}
-                style={{
-                  width: '100%',
-                  padding: '12px 15px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  color: 'white',
-                  marginBottom: '5px'
-                }}
-                required
-              />
-            </div>
+          // Tampilkan login atau signup form
+          showSignup ? (
+            // Signup Form
+            <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>🔐 Buat Akun Baru</h2>
+              
+              <div>
+                <input
+                  ref={signupUsernameRef}
+                  type="text"
+                  placeholder="Username"
+                  value={signupData.username}
+                  onChange={(e) => setSignupData({...signupData, username: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '12px 15px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    color: 'white',
+                    marginBottom: '5px'
+                  }}
+                  required
+                />
+              </div>
 
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Password"
-                value={inputLogin.password}
-                onChange={(e) => setInputLogin({...inputLogin, password: e.target.value})}
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Password"
+                  value={signupData.password}
+                  onChange={(e) => setSignupData({...signupData, password: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '12px 15px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    color: 'white',
+                    paddingRight: '40px'
+                  }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: 'white',
+                    fontSize: '0.8rem'
+                  }}
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
                 style={{
-                  width: '100%',
-                  padding: '12px 15px',
+                  padding: '12px',
                   borderRadius: '10px',
                   border: 'none',
-                  background: 'rgba(255, 255, 255, 0.2)',
+                  background: 'linear-gradient(90deg, #8A2BE2, #4B0082)',
                   color: 'white',
-                  paddingRight: '40px'
-                }}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute',
-                  right: '10px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  color: 'white',
-                  fontSize: '0.8rem'
+                  fontWeight: '600',
+                  marginTop: '10px'
                 }}
               >
-                {showPassword ? '🙈' : '👁️'}
+                {isLoading ? 'Mendaftarkan...' : 'Daftar Sekarang'}
               </button>
-            </div>
 
-            <button
-              type="submit"
-              style={{
-                padding: '12px',
-                borderRadius: '10px',
-                border: 'none',
-                background: 'linear-gradient(90deg, #8A2BE2, #4B0082)',
-                color: 'white',
-                fontWeight: '600',
-                marginTop: '10px'
-              }}
-            >
-              {loginProgress > 0 ? `Memverifikasi... ${Math.min(loginProgress, 100)}%` : 'Login'}
-            </button>
+              <button 
+                type="button" 
+                className="toggle-form" 
+                onClick={() => setShowSignup(false)}
+              >
+                Sudah punya akun? Login disini
+              </button>
 
-            {loginProgress > 0 && <ProgressBar percentage={loginProgress} color="linear-gradient(90deg, #FF8A00, #FF0058)" />}
-            {error && <p style={{ color: '#FF6B6B', textAlign: 'center', marginTop: '10px' }}>{error}</p>}
-          </form>
+              {error && <p style={{ color: '#FF6B6B', textAlign: 'center', marginTop: '10px' }}>{error}</p>}
+              {signupSuccess && (
+                <p style={{ color: '#4BB543', textAlign: 'center', marginTop: '10px' }}>
+                  Permintaan signup berhasil dikirim! Admin akan menghubungi Anda.
+                </p>
+              )}
+            </form>
+          ) : (
+            // Login Form
+            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <input
+                  ref={usernameRef}
+                  type="text"
+                  placeholder="Username"
+                  value={inputLogin.username}
+                  onChange={(e) => setInputLogin({...inputLogin, username: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '12px 15px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    color: 'white',
+                    marginBottom: '5px'
+                  }}
+                  required
+                />
+              </div>
+
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Password"
+                  value={inputLogin.password}
+                  onChange={(e) => setInputLogin({...inputLogin, password: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '12px 15px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    color: 'white',
+                    paddingRight: '40px'
+                  }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: 'white',
+                    fontSize: '0.8rem'
+                  }}
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                style={{
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'linear-gradient(90deg, #8A2BE2, #4B0082)',
+                  color: 'white',
+                  fontWeight: '600',
+                  marginTop: '10px'
+                }}
+              >
+                {loginProgress > 0 ? `Memverifikasi... ${Math.min(loginProgress, 100)}%` : 'Login'}
+              </button>
+
+              <button 
+                type="button" 
+                className="toggle-form" 
+                onClick={() => {
+                  setShowSignup(true);
+                  setError('');
+                  setSignupSuccess(false);
+                }}
+              >
+                Belum punya akun? Daftar disini
+              </button>
+
+              {loginProgress > 0 && <ProgressBar percentage={loginProgress} color="linear-gradient(90deg, #FF8A00, #FF0058)" />}
+              {error && <p style={{ color: '#FF6B6B', textAlign: 'center', marginTop: '10px' }}>{error}</p>}
+            </form>
+          )
         ) : (
           // Deployment Form
           <form onSubmit={handleDeploy} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -461,7 +618,7 @@ export default function Home() {
                 border: 'none',
                 background: 'rgba(255, 255, 255, 0.2)',
                 color: 'white',
-                marginTop: '15px',
+                marginTop: '15px,
                 width: '100%',
                 fontWeight: '600',
                 backdropFilter: 'blur(5px)'
@@ -474,5 +631,4 @@ export default function Home() {
       </div>
     </div>
   );
-    }
-                  
+}
